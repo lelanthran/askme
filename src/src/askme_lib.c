@@ -4,6 +4,9 @@
 #include <string.h>
 #include <stdbool.h>
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 #include <dirent.h>
 
 #include "askme_lib.h"
@@ -28,14 +31,36 @@ void askme_read_cline (int argc, char **argv)
    }
 }
 
+static void create_homedir ()
+{
+   char *homedir = NULL;
+   struct stat sb;
+   static const int mode = 0; // TODO: figure out what modes are necessary.
+#ifdef PLATFORM_WINDOWS
+   homedir = ds_str_cat (getenv ("HOMEDRIVE"), getenv ("HOMEPATH"), "/.askme/", NULL);
+#endif
+#ifdef PLATFORM_POSIX
+   homedir = ds_str_cat (getenv ("HOME"), "/.askme", NULL);
+#endif
+   if ((stat (homedir, &sb))!=0) {
+      ASKME_LOG ("[%s]: %m, attempting to create it.\n", homedir);
+      if ((mkdir (homedir, mode))!=0) {
+         ASKME_LOG ("[%s]: Cannot create: %m\n", homedir);
+      }
+   }
+   free (homedir);
+}
+
 char *askme_get_subdir (const char *path)
 {
    char *homedir = NULL;
+
+   create_homedir ();
 #ifdef PLATFORM_WINDOWS
    homedir = ds_str_cat (getenv ("HOMEDRIVE"), getenv ("HOMEPATH"), "/.askme/", path, NULL);
 #endif
 #ifdef PLATFORM_POSIX
-   homedir = ds_str_cat (getenv ("HOME"), "/.askme", NULL);
+   homedir = ds_str_cat (getenv ("HOME"), "/.askme", path, NULL);
 #endif
    return homedir;
 }

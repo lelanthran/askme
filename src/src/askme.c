@@ -74,6 +74,12 @@ int main (int argc, char **argv)
    if (!topic) {
       char **topics = askme_list_topics ();
       size_t ntopics = 0;
+      if (!topics || !topics[0]) {
+         ASKME_LOG ("Failed to find any topics. Maybe you should create some topic files\n"
+                    "in the directory '$(HOME)/.askme/topics'.\n");
+         goto errorexit;
+      }
+
       printf ("Choose a topic from below (type in the number of the topic)\n");
       for (size_t i=0; topics && topics[i]; i++) {
          printf ("%zu: %s\n", i+1, topics[i]);
