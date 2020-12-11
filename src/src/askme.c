@@ -3,6 +3,8 @@
 
 #include "askme_lib.h"
 
+#include "ds_str.h"
+
 static const char *help_msg[] = {
 "askme: A program to help memorise study material",
 "  --help            This message",
@@ -73,7 +75,7 @@ int main (int argc, char **argv)
       char **topics = askme_list_topics ();
       size_t ntopics = 0;
       printf ("Choose a topic from below (type in the number of the topic)\n");
-      for (size_t i=0; topics[i]; i++) {
+      for (size_t i=0; topics && topics[i]; i++) {
          printf ("%zu: %s\n", i+1, topics[i]);
          ntopics++;
       }
@@ -88,7 +90,7 @@ int main (int argc, char **argv)
          ASKME_LOG ("Topic [%zu] does not exist\n", topic_number);
          goto errorexit;
       }
-      topic = askme_strdup (topics[topic_number-1]);
+      topic = ds_str_dup (topics[topic_number-1]);
       for (size_t i=0; topics[i]; i++) {
          free (topics[i]);
       }
