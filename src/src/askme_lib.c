@@ -35,7 +35,7 @@ static void create_homedir ()
 {
    char *homedir = NULL;
    struct stat sb;
-   static const int mode = 0; // TODO: figure out what modes are necessary.
+   static const int mode = S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH;
 #ifdef PLATFORM_WINDOWS
    homedir = ds_str_cat (getenv ("HOMEDRIVE"), getenv ("HOMEPATH"), "/.askme/", NULL);
 #endif
