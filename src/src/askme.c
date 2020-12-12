@@ -51,7 +51,7 @@ int main (int argc, char **argv)
    const char *topic = NULL;
    const char *prompt = getenv ("PS2");
 
-   if (!prompt) {
+   if (!prompt || prompt[0] == 0) {
       prompt = "> ";
    }
 
