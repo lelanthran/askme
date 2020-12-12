@@ -85,7 +85,8 @@ char *askme_get_subdir (const char *path)
 char **askme_list_topics (void)
 {
    bool error = true;
-   void **ret = NULL;
+   void **array = NULL;
+   char **ret = NULL;
    DIR *dirp = NULL;
    struct dirent *de = NULL;
    char *tmp = NULL;
@@ -101,18 +102,36 @@ char **askme_list_topics (void)
       goto errorexit;
    }
 
+   if (!(array = ds_array_new ())) {
+      ASKME_LOG ("Failed to allocate new array\n");
+      goto errorexit;
+   }
+
    while ((de = readdir (dirp))) {
       if ((memcmp (de->d_name, ".", 2))==0 ||
           (memcmp (de->d_name, "..", 3))==0) {
          continue;
       }
-      free (tmp);
+
       if (!(tmp = ds_str_dup (de->d_name))) {
          ASKME_LOG ("OOM error - cannot copy [%s]\n", de->d_name);
          goto errorexit;
       }
-      if (!(ds_array_ins_tail (&ret, tmp))) {
+      if (!(ds_array_ins_tail (&array, tmp))) {
          ASKME_LOG ("OOM error - failed to insert [%s] into array\n", tmp);
+         goto errorexit;
+      }
+   }
+
+   if (!(ret = calloc (ds_array_length (array) + 1, sizeof *ret))) {
+      ASKME_LOG ("OOM error - failed to allocate return value\n");
+      goto errorexit;
+   }
+
+   for (size_t i=0; i<ds_array_length (array); i++) {
+      char *tmp1 = ds_array_index (array, i);
+      if (!(ret[i] = ds_str_dup (tmp1))) {
+         ASKME_LOG ("OOM error - failed to copy array element %zu (%s)\n", i, tmp1);
          goto errorexit;
       }
    }
@@ -125,14 +144,17 @@ errorexit:
    }
    free (tmp);
    if (error) {
-      char **tmp = (char **)ret;
-      for (size_t i=0; tmp && tmp[i]; i++) {
-         free (tmp[i]);
+      for (size_t i=0; ds_array_length (array); i++) {
+         free (ds_array_index (array, i));
+      }
+      ds_array_del (array);
+      for (size_t i=0; ret && ret[i]; i++) {
+         free (ret[i]);
       }
       free (ret);
    }
 
-   return (char **)ret;
+   return ret;
 }
 
 

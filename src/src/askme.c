@@ -110,6 +110,8 @@ int main (int argc, char **argv)
       free (topics);
    }
 
+   printf ("Seeking %zu questions from topic [%s]\n", nquestions, topic);
+
    ret = EXIT_SUCCESS;
 
 errorexit:
