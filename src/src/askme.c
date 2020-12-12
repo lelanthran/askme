@@ -49,6 +49,11 @@ int main (int argc, char **argv)
 
    size_t  nquestions = 10;
    const char *topic = NULL;
+   const char *prompt = getenv ("PS2");
+
+   if (!prompt) {
+      prompt = "> ";
+   }
 
    askme_read_cline (argc, argv);
 
@@ -85,6 +90,8 @@ int main (int argc, char **argv)
          printf ("%zu: %s\n", i+1, topics[i]);
          ntopics++;
       }
+      printf ("%s: ", prompt);
+
       size_t topic_number;
       static char input[1024];
       fgets (input, sizeof input, stdin);
@@ -102,6 +109,7 @@ int main (int argc, char **argv)
       }
       free (topics);
    }
+
    ret = EXIT_SUCCESS;
 
 errorexit:
