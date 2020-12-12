@@ -31,23 +31,40 @@ void askme_read_cline (int argc, char **argv)
    }
 }
 
+static void create_dir (const char *path, ...)
+{
+   char *fullpath = NULL;
+   va_list ap;
+   struct stat sb;
+   static const int mode = S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH;
+
+   va_start (ap, path);
+   if (!(fullpath = ds_str_vcat (path, ap))) {
+      ASKME_LOG ("OOM Error, cannot create path [%s/...]\n", path);
+      return;
+   }
+   if ((stat (fullpath, &sb))!=0) {
+      ASKME_LOG ("[%s]: %m, attempting to create it.\n", fullpath);
+      if ((mkdir (fullpath, mode))!=0) {
+         ASKME_LOG ("[%s]: Cannot create: %m\n", fullpath);
+      }
+   }
+   free (fullpath);
+   va_end (ap);
+}
+
 static void create_homedir ()
 {
    char *homedir = NULL;
-   struct stat sb;
-   static const int mode = S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH;
 #ifdef PLATFORM_WINDOWS
    homedir = ds_str_cat (getenv ("HOMEDRIVE"), getenv ("HOMEPATH"), "/.askme/", NULL);
 #endif
 #ifdef PLATFORM_POSIX
    homedir = ds_str_cat (getenv ("HOME"), "/.askme", NULL);
 #endif
-   if ((stat (homedir, &sb))!=0) {
-      ASKME_LOG ("[%s]: %m, attempting to create it.\n", homedir);
-      if ((mkdir (homedir, mode))!=0) {
-         ASKME_LOG ("[%s]: Cannot create: %m\n", homedir);
-      }
-   }
+   create_dir (homedir, NULL);
+   create_dir (homedir, "/topics", NULL);
+   create_dir (homedir, "/grades", NULL);
    free (homedir);
 }
 
@@ -60,7 +77,7 @@ char *askme_get_subdir (const char *path)
    homedir = ds_str_cat (getenv ("HOMEDRIVE"), getenv ("HOMEPATH"), "/.askme/", path, NULL);
 #endif
 #ifdef PLATFORM_POSIX
-   homedir = ds_str_cat (getenv ("HOME"), "/.askme", path, NULL);
+   homedir = ds_str_cat (getenv ("HOME"), "/.askme/", path, NULL);
 #endif
    return homedir;
 }
