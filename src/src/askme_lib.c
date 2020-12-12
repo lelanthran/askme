@@ -68,18 +68,27 @@ static void create_homedir ()
    free (homedir);
 }
 
-char *askme_get_subdir (const char *path)
+char *askme_get_subdir (const char *path, ...)
 {
+   char *ret = NULL;
    char *homedir = NULL;
+   va_list ap;
+
+   va_start (ap, path);
 
    create_homedir ();
+
 #ifdef PLATFORM_WINDOWS
    homedir = ds_str_cat (getenv ("HOMEDRIVE"), getenv ("HOMEPATH"), "/.askme/", path, NULL);
 #endif
 #ifdef PLATFORM_POSIX
    homedir = ds_str_cat (getenv ("HOME"), "/.askme/", path, NULL);
 #endif
-   return homedir;
+   ret = ds_str_vcat (homedir, ap);
+   free (homedir);
+   va_end (ap);
+
+   return ret;
 }
 
 char **askme_list_topics (void)
@@ -91,7 +100,7 @@ char **askme_list_topics (void)
    struct dirent *de = NULL;
    char *tmp = NULL;
 
-   char *topic_dir = askme_get_subdir ("topics");
+   char *topic_dir = askme_get_subdir ("topics", NULL);
    if (!topic_dir) {
       ASKME_LOG ("Failed to determine the topics directory path\n");
       goto errorexit;
@@ -139,22 +148,75 @@ char **askme_list_topics (void)
    error = false;
 
 errorexit:
+   free (topic_dir);
+
    if (dirp) {
       closedir (dirp);
    }
-   free (tmp);
+
+   for (size_t i=0; i<ds_array_length (array); i++) {
+      free (ds_array_index (array, i));
+   }
+   ds_array_del (array);
+
    if (error) {
-      for (size_t i=0; ds_array_length (array); i++) {
-         free (ds_array_index (array, i));
-      }
-      ds_array_del (array);
       for (size_t i=0; ret && ret[i]; i++) {
          free (ret[i]);
       }
       free (ret);
+      ret = NULL;
    }
 
    return ret;
 }
 
+char ***askme_load_questions (const char *topic)
+{
+   bool error = true;
+   char ***ret = NULL;
+   void **array = NULL;
+   char *fullpath = NULL;
+   FILE *inf = NULL;
+
+   if (!(fullpath = askme_get_subdir ("topics/", topic, NULL))) {
+      ASKME_LOG ("OOM error - unable to create pathname [topics/%s\n", topic);
+      goto errorexit;
+   }
+
+   if (!(inf = fopen (fullpath, "rt"))) {
+      ASKME_LOG ("Failed to open [%s]: %m\n", fullpath);
+      goto errorexit;
+   }
+
+   error = false;
+
+errorexit:
+   if (inf)
+      fclose (inf);
+
+   free (fullpath);
+
+   for (size_t i=0; i<ds_array_length (array); i++) {
+      void **inner_array = ds_array_index (array, i);
+      for (size_t j=0; j<ds_array_length (inner_array); j++) {
+         char *tmp = ds_array_index (inner_array, j);
+         free (tmp);
+      }
+      ds_array_del (inner_array);
+   }
+   ds_array_del (array);
+
+   if (error) {
+      for (size_t i=0; ret && ret[i]; i++) {
+         for (size_t j=0; ret[i][j]; j++) {
+            free (ret[i][j]);
+         }
+         free (ret[i]);
+      }
+      free (ret);
+      ret = NULL;
+   }
+
+   return ret;
+}
 

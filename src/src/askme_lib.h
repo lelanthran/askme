@@ -21,9 +21,9 @@ extern "C" {
 #endif
 
    void askme_read_cline (int argc, char **argv);
-   char *askme_get_subdir (const char *path);
+   char *askme_get_subdir (const char *path, ...);
    char **askme_list_topics (void);
-   char **askme_load_questions (const char *topic);
+   char ***askme_load_questions (const char *topic);
 
 
 #ifdef __cplusplus

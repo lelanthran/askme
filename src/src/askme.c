@@ -50,6 +50,7 @@ int main (int argc, char **argv)
    size_t  nquestions = 10;
    const char *topic = NULL;
    const char *prompt = getenv ("PS2");
+   char ***questions = NULL;
 
    if (!prompt || prompt[0] == 0) {
       prompt = "> ";
@@ -111,10 +112,23 @@ int main (int argc, char **argv)
    }
 
    printf ("Seeking %zu questions from topic [%s]\n", nquestions, topic);
+   if (!(questions = askme_load_questions (topic))) {
+      ASKME_LOG ("Failed to load questions from [%s]\n", topic);
+      goto errorexit;
+   }
 
    ret = EXIT_SUCCESS;
 
 errorexit:
+   free (topic);
+
+   for (size_t i=0; questions && questions[i]; i++) {
+      for (size_t j=0; questions[i][j]; i++) {
+         free (questions[i][j]);
+      }
+      free (questions[i]);
+   }
+   free (questions);
    return ret;
 }
 
