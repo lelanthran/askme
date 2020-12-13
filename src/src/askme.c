@@ -122,6 +122,15 @@ int main (int argc, char **argv)
       goto errorexit;
    }
 
+   // Testing that we have all the results
+   for (size_t i=0; questions[i]; i++) {
+      printf ("%zu: ", i);
+      for (size_t j=0; questions[i][j]; j++) {
+         printf ("[%s] ", questions[i][j]);
+      }
+      printf ("\n");
+   }
+
    ret = EXIT_SUCCESS;
 
 errorexit:
@@ -129,7 +138,7 @@ errorexit:
       free (topic);
 
    for (size_t i=0; questions && questions[i]; i++) {
-      for (size_t j=0; questions[i][j]; i++) {
+      for (size_t j=0; questions[i][j]; j++) {
          free (questions[i][j]);
       }
       free (questions[i]);

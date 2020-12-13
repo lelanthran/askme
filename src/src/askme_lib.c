@@ -214,8 +214,6 @@ errorexit:
    return ret;
 }
 
-// TODO: Stopped here last, want to move the str/array manipulation
-// into the ds library.
 char ***askme_parse_qfile (FILE *inf)
 {
    bool error = true;
@@ -256,43 +254,59 @@ char ***askme_parse_qfile (FILE *inf)
                     "\non lines in the input file.", recordnum, line_len);
          goto errorexit;
       }
+      *tmp = 0;
       char *saveptr = NULL;
-      ds_array_del (record);
-      record_array = ds_array_new ();
+      void **record_array = ds_array_new ();
       size_t fieldnum = 0;
       char *field = strtok_r (line, "\t", &saveptr);
       while (field != NULL) {
-         if (!(ds_array_ins_tail (&record_array, field))) {
+         char *newfield = ds_str_dup (field);
+         if (!newfield) {
+            ASKME_LOG ("OOM error - cannot allocate memory for record %zu, field %zu\n",
+                       recordnum, fieldnum);
+            goto errorexit;
+         }
+         if (!(ds_array_ins_tail (&record_array, newfield))) {
             ASKME_LOG ("Failed to add field %zu in record %zu\n", fieldnum, recordnum);
+            free (newfield);
             goto errorexit;
          }
          fieldnum++;
          field = strtok_r (NULL, "\t", &saveptr);
       }
-      if (!(ds_array_ins_tail (&array, record))) {
-
+      if (!(ds_array_ins_tail (&array, record_array))) {
+         ASKME_LOG ("Failed to insert record %zu into the results\n", recordnum);
+         goto errorexit;
       }
       recordnum++;
+   }
+
+   if (!(ret = calloc (ds_array_length (array) + 1, sizeof *ret))) {
+      ASKME_LOG ("OOM Error - failed to allocate return value\n");
+      goto errorexit;
+   }
+   for (size_t i=0; i<ds_array_length (array); i++) {
+      void **record = ds_array_index (array, i);
+      if (!(ret[i] = calloc (ds_array_length (record) + 1, sizeof *ret[i]))) {
+         ASKME_LOG ("Failed to allocate memory for record %zu\n", i);
+         goto errorexit;
+      }
+      for (size_t j=0; j<ds_array_length (record); j++) {
+         ret[i][j] = ds_array_index (record, j);
+      }
    }
 
    error = false;
 
 errorexit:
-   if (inf)
-      fclose (inf);
 
    free (line);
 
    for (size_t i=0; i<ds_array_length (array); i++) {
       void **inner_array = ds_array_index (array, i);
-      for (size_t j=0; j<ds_array_length (inner_array); j++) {
-         char *tmp = ds_array_index (inner_array, j);
-         free (tmp);
-      }
       ds_array_del (inner_array);
    }
    ds_array_del (array);
-   ds_array_del (record);
 
    if (error) {
       for (size_t i=0; ret && ret[i]; i++) {
