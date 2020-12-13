@@ -24,6 +24,7 @@ extern "C" {
    char *askme_get_subdir (const char *path, ...);
    char **askme_list_topics (void);
    char ***askme_load_questions (const char *topic);
+   char ***askme_parse_qfile (FILE *inf);
 
 
 #ifdef __cplusplus

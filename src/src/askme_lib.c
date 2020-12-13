@@ -173,9 +173,8 @@ errorexit:
 char ***askme_load_questions (const char *topic)
 {
    bool error = true;
-   char ***ret = NULL;
-   void **array = NULL;
    char *fullpath = NULL;
+   char ***ret = NULL;
    FILE *inf = NULL;
 
    if (!(fullpath = askme_get_subdir ("topics/", topic, NULL))) {
@@ -188,6 +187,11 @@ char ***askme_load_questions (const char *topic)
       goto errorexit;
    }
 
+   if (!(ret = askme_parse_qfile (inf))) {
+      ASKME_LOG ("Failed to parse [%s]: %m\n", fullpath);
+      goto errorexit;
+   }
+
    error = false;
 
 errorexit:
@@ -195,16 +199,6 @@ errorexit:
       fclose (inf);
 
    free (fullpath);
-
-   for (size_t i=0; i<ds_array_length (array); i++) {
-      void **inner_array = ds_array_index (array, i);
-      for (size_t j=0; j<ds_array_length (inner_array); j++) {
-         char *tmp = ds_array_index (inner_array, j);
-         free (tmp);
-      }
-      ds_array_del (inner_array);
-   }
-   ds_array_del (array);
 
    if (error) {
       for (size_t i=0; ret && ret[i]; i++) {
@@ -220,3 +214,96 @@ errorexit:
    return ret;
 }
 
+// TODO: Stopped here last, want to move the str/array manipulation
+// into the ds library.
+char ***askme_parse_qfile (FILE *inf)
+{
+   bool error = true;
+   char ***ret = NULL;
+   char *line = NULL;
+   void **array = NULL;
+   char **record = NULL;
+   size_t line_len = 0;
+
+   // TODO: Implement unit suffixes (MB, KB, etc)
+   if (getenv ("line-length")) {
+      if ((sscanf (getenv ("line-length"), "%zu", &line_len))!=1) {
+         ASKME_LOG ("Failed to read [%s] as a line-length.\n", getenv ("line-length"));
+         goto errorexit;
+      }
+   } else {
+      line_len = 1024 * 1024 * 8; // 8MB ought to be enough as a default
+   }
+
+   if (!(array = ds_array_new ())) {
+      ASKME_LOG ("OOM error: allocating new array\n");
+      goto errorexit;
+   }
+
+   if (!(line = calloc (1, line_len))) {
+      ASKME_LOG ("OOM error allocating line of [%zu] bytes\n", line_len);
+      goto errorexit;
+   }
+
+   size_t recordnum = 0;
+   while (!feof (inf) && !ferror (inf) && fgets (line, line_len - 1, inf)) {
+      char *tmp = NULL;
+
+      // Ensure that we have the entire line
+      if (!(tmp = strchr (line, '\n'))) {
+         ASKME_LOG ("Line %zu exceeds the maximum line length of %zu. Try "
+                    "using the 'line-length' option to set a larger length"
+                    "\non lines in the input file.", recordnum, line_len);
+         goto errorexit;
+      }
+      char *saveptr = NULL;
+      ds_array_del (record);
+      record_array = ds_array_new ();
+      size_t fieldnum = 0;
+      char *field = strtok_r (line, "\t", &saveptr);
+      while (field != NULL) {
+         if (!(ds_array_ins_tail (&record_array, field))) {
+            ASKME_LOG ("Failed to add field %zu in record %zu\n", fieldnum, recordnum);
+            goto errorexit;
+         }
+         fieldnum++;
+         field = strtok_r (NULL, "\t", &saveptr);
+      }
+      if (!(ds_array_ins_tail (&array, record))) {
+
+      }
+      recordnum++;
+   }
+
+   error = false;
+
+errorexit:
+   if (inf)
+      fclose (inf);
+
+   free (line);
+
+   for (size_t i=0; i<ds_array_length (array); i++) {
+      void **inner_array = ds_array_index (array, i);
+      for (size_t j=0; j<ds_array_length (inner_array); j++) {
+         char *tmp = ds_array_index (inner_array, j);
+         free (tmp);
+      }
+      ds_array_del (inner_array);
+   }
+   ds_array_del (array);
+   ds_array_del (record);
+
+   if (error) {
+      for (size_t i=0; ret && ret[i]; i++) {
+         for (size_t j=0; ret[i][j]; j++) {
+            free (ret[i][j]);
+         }
+         free (ret[i]);
+      }
+      free (ret);
+      ret = NULL;
+   }
+
+   return ret;
+}

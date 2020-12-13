@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 #include "askme_lib.h"
 
@@ -48,7 +49,8 @@ int main (int argc, char **argv)
    int ret = EXIT_FAILURE;
 
    size_t  nquestions = 10;
-   const char *topic = NULL;
+   char *topic = NULL;
+   bool free_topic = false;
    const char *prompt = getenv ("PS2");
    char ***questions = NULL;
 
@@ -76,7 +78,9 @@ int main (int argc, char **argv)
       goto errorexit;
    }
 
+   free_topic = false;
    topic = getenv ("topic");
+
    if (!topic) {
       char **topics = askme_list_topics ();
       size_t ntopics = 0;
@@ -104,6 +108,7 @@ int main (int argc, char **argv)
          ASKME_LOG ("Topic [%zu] does not exist\n", topic_number);
          goto errorexit;
       }
+      free_topic = true;
       topic = ds_str_dup (topics[topic_number-1]);
       for (size_t i=0; topics[i]; i++) {
          free (topics[i]);
@@ -120,7 +125,8 @@ int main (int argc, char **argv)
    ret = EXIT_SUCCESS;
 
 errorexit:
-   free (topic);
+   if (free_topic)
+      free (topic);
 
    for (size_t i=0; questions && questions[i]; i++) {
       for (size_t j=0; questions[i][j]; i++) {
