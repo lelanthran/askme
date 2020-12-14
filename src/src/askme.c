@@ -76,6 +76,7 @@ int main (int argc, char **argv)
    const char *prompt = getenv ("PS2");
    char ***questions = NULL;
    uint64_t *responses = NULL;
+   static char input[1024];
 
    if (!prompt || prompt[0] == 0) {
       prompt = "> ";
@@ -121,7 +122,6 @@ int main (int argc, char **argv)
       printf ("%s: ", prompt);
 
       size_t topic_number;
-      static char input[1024];
       fgets (input, sizeof input, stdin);
       if ((sscanf (input, "%zu", &topic_number))!=1) {
          ASKME_LOG ("Failed to read a topic number, aborting\n");
@@ -164,17 +164,35 @@ int main (int argc, char **argv)
                  total_questions);
       goto errorexit;
    }
-   memset (responses, 0xff, sizeof responses);
+   memset (responses, 0xff, sizeof *responses);
 
 
    // Print the questions and store the responses
    for (size_t i=0; i<nquestions; i++) {
-      printf ("Q-%05zu) %s\n", i+1, questions[i][ASKME_QIDX_QUESTION]);
-      for (size_t j=2; questions[j]; j++) {
-         printf ("   %zu: %s\n", j-2, questions[i][j]);
+      bool answered = false;
+      size_t response = (size_t)-1;
+      while (!answered) {
+         size_t noptions = 0;
+         printf ("Q-%05zu) %s\n", i+1, questions[i][ASKME_QIDX_QUESTION]);
+         for (size_t j=2; questions[i][j]; j++) {
+            printf ("   %zu: %s\n", j-2, questions[i][j]);
+            noptions++;
+         }
+         printf ("%s", prompt);
+         fflush (stdout);
+         fgets (input, sizeof input, stdin);
+         // TODO, here we must parse comma/space separated answers
+         if ((sscanf (input, "%zu", &response))!=1) {
+            ASKME_LOG ("Input [%s] is not a number\n", input);
+            continue;
+         }
+         if (response > noptions) {
+            ASKME_LOG ("Selected answer [%zu] is not an option. Try again.\n", response);
+            continue;
+         }
+         responses[i] = response;
+         answered = true;
       }
-      printf ("%s", prompt);
-      fflush (stdout);
    }
 
    // Testing that we have all the results
