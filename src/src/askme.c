@@ -171,7 +171,7 @@ int main (int argc, char **argv)
    for (size_t i=0; i<nquestions; i++) {
       printf ("Q-%05zu) %s\n", i+1, questions[i][ASKME_QIDX_QUESTION]);
       for (size_t j=2; questions[j]; j++) {
-         printf ("   %zu: %s\n", j, questions[i][j]);
+         printf ("   %zu: %s\n", j-2, questions[i][j]);
       }
       printf ("%s", prompt);
       fflush (stdout);
