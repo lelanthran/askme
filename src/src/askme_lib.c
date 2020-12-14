@@ -220,7 +220,6 @@ char ***askme_parse_qfile (FILE *inf)
    char ***ret = NULL;
    char *line = NULL;
    void **array = NULL;
-   char **record = NULL;
    size_t line_len = 0;
 
    // TODO: Implement unit suffixes (MB, KB, etc)

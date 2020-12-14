@@ -1,10 +1,32 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <stdint.h>
+#include <string.h>
+#include <time.h>
 
 #include "askme_lib.h"
 
 #include "ds_str.h"
+
+void randomise_array (void **array, size_t nitems)
+{
+   static int seed = 0;
+
+   srand (seed);
+
+   if (!seed) {
+      // seed = time (NULL);
+      // srand (seed);
+   }
+
+   for (size_t i=0; array[i]; i++) {
+      size_t target = rand () % nitems;
+      void *tmp = array[i];
+      array[i] = array[target];
+      array[target] = tmp;
+   }
+}
 
 static const char *help_msg[] = {
 "askme: A program to help memorise study material",
@@ -53,6 +75,7 @@ int main (int argc, char **argv)
    bool free_topic = false;
    const char *prompt = getenv ("PS2");
    char ***questions = NULL;
+   uint64_t *responses = NULL;
 
    if (!prompt || prompt[0] == 0) {
       prompt = "> ";
@@ -122,6 +145,33 @@ int main (int argc, char **argv)
       goto errorexit;
    }
 
+   size_t total_questions = 0;
+   for (size_t i=0; questions[i]; i++) {
+      total_questions++;
+   }
+
+   if (nquestions > total_questions) {
+      nquestions = total_questions;
+   }
+
+   // Randomise the array
+   randomise_array ((void **)questions, total_questions);
+
+
+   // Generate the array to store the user responses
+   if (!(responses = calloc (total_questions, sizeof *responses))) {
+      ASKME_LOG ("OOM error: Failed to allocate response array of %zu elements\n",
+                 total_questions);
+      goto errorexit;
+   }
+   memset (responses, 0xff, sizeof responses);
+
+
+   // Print the questions and store the responses
+   for (size_t i=0; i<nquestions; i++) {
+      printf ("Q-%05zu) %s\n", i+1, questions[i][ASKME_QIDX_QUESTION]);
+   }
+
    // Testing that we have all the results
    for (size_t i=0; questions[i]; i++) {
       printf ("%zu: ", i);
@@ -134,6 +184,9 @@ int main (int argc, char **argv)
    ret = EXIT_SUCCESS;
 
 errorexit:
+
+   free (responses);
+
    if (free_topic)
       free (topic);
 

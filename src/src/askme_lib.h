@@ -10,11 +10,9 @@
 } while (0)
 
 
-#define ASKME_QIDX_NUM           (0)
-#define ASKME_QIDX_QUESTION      (1)
-#define ASKME_QIDX_ANSBMP        (2)
-#define ASKME_QIDX_RESPONSE      (3)
-#define ASKME_QIDX_OPTION_OFFS   (4)
+#define ASKME_QIDX_QUESTION      (0)
+#define ASKME_QIDX_ANSBMP        (1)
+#define ASKME_QIDX_OPTION_OFFS   (2)
 
 #ifdef __cplusplus
 extern "C" {
