@@ -5,6 +5,7 @@
 #include <string.h>
 #include <inttypes.h>
 #include <time.h>
+#include <ctype.h>
 
 #include "askme_lib.h"
 
@@ -29,6 +30,10 @@ void randomise_array (void **array, size_t nitems)
    }
 }
 
+#define SETBIT(num,idx)          (num |= (1 << idx))
+#define CLRBIT(num,idx)          (num = num & ~(1 << idx))
+#define TSTBIT(num,idx)          (num & (1 << idx))
+
 size_t parse_numbers (const char *string)
 {
    size_t ret = 0;
@@ -39,14 +44,20 @@ size_t parse_numbers (const char *string)
          tmp++;
       }
       sscanf (tmp, "%zu", &number);
-      if (number) {
-         size_t bits = 1 << number;
-         ret |= bits;
-      }
+      SETBIT (ret, number);
       while (*tmp && isdigit (*tmp)) {
          tmp++;
       }
+   }
+   return ret;
+}
 
+char *printbin (size_t num, char *dst)
+{
+   char *ret = dst;
+   for (int i=31; i>=0; i--) {
+      *dst++ = (num >> i) & 0x01 ? '1' : '0';
+      *dst = 0;
    }
    return ret;
 }
@@ -198,7 +209,7 @@ int main (int argc, char **argv)
          size_t noptions = 0;
          printf ("Q-%05zu) %s\n", i+1, questions[i][ASKME_QIDX_QUESTION]);
          for (size_t j=2; questions[i][j]; j++) {
-            printf ("   %zu: %s\n", j-2, questions[i][j]);
+            printf ("   %zu: %s\n", j-1, questions[i][j]);
             noptions++;
          }
          printf ("%s", prompt);
@@ -220,7 +231,7 @@ int main (int argc, char **argv)
          for (size_t j=0; tmp[j]; j++) {
             if (!(isdigit (tmp[j])) && !(isspace (tmp[j]))) {
                ASKME_LOG ("Input at [%s] is not a valid number. Enter only numbers seperated by spaces\n",
-                           tmp);
+                           &tmp[j]);
                not_number = true;
             }
          }
@@ -228,9 +239,12 @@ int main (int argc, char **argv)
             continue;
 
          size_t response = parse_numbers (input);
+         // char buf[65];
+         // printbin (response, buf);
+         // ASKME_LOG ("Response = [%s]\n", buf);
          bool too_large = false;
-         for (size_t j=noptions; j<31; j++) {
-            if ((response >> j) & 0x01) {
+         for (size_t j=noptions+1; j<31; j++) {
+            if (TSTBIT (response, j)) {
                ASKME_LOG ("Response [%zu] is not an option\n", j);
                too_large = true;
             }
@@ -238,10 +252,19 @@ int main (int argc, char **argv)
          if (too_large)
             continue;
 
+         if (TSTBIT (response, 0)) {
+            ASKME_LOG ("Response [0] is not an option\n");
+            continue;
+         }
+
          responses[i] = response;
          answered = true;
       }
    }
+
+   // TODO: Need to now grade the test by comparing the bitmap in responses[i]
+   // to the bitmap stored as a string in the questions[i][2] field
+
 
    // Testing that we have all the results
    for (size_t i=0; questions[i]; i++) {
