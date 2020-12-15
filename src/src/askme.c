@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
+#include <inttypes.h>
 #include <time.h>
 
 #include "askme_lib.h"
@@ -27,6 +28,29 @@ void randomise_array (void **array, size_t nitems)
       array[target] = tmp;
    }
 }
+
+size_t parse_numbers (const char *string)
+{
+   size_t ret = 0;
+   const char *tmp = string;
+   while (*tmp) {
+      size_t number = 0;
+      while (*tmp && !(isdigit (*tmp))) {
+         tmp++;
+      }
+      sscanf (tmp, "%zu", &number);
+      if (number) {
+         size_t bits = 1 << number;
+         ret |= bits;
+      }
+      while (*tmp && isdigit (*tmp)) {
+         tmp++;
+      }
+
+   }
+   return ret;
+}
+
 
 static const char *help_msg[] = {
 "askme: A program to help memorise study material",
@@ -170,7 +194,6 @@ int main (int argc, char **argv)
    // Print the questions and store the responses
    for (size_t i=0; i<nquestions; i++) {
       bool answered = false;
-      size_t response = (size_t)-1;
       while (!answered) {
          size_t noptions = 0;
          printf ("Q-%05zu) %s\n", i+1, questions[i][ASKME_QIDX_QUESTION]);
@@ -181,15 +204,40 @@ int main (int argc, char **argv)
          printf ("%s", prompt);
          fflush (stdout);
          fgets (input, sizeof input, stdin);
-         // TODO, here we must parse comma/space separated answers
-         if ((sscanf (input, "%zu", &response))!=1) {
-            ASKME_LOG ("Input [%s] is not a number\n", input);
-            continue;
+
+         char *tmp = strchr (input, '\n');
+         if (tmp)
+            *tmp = 0;
+         tmp = input;
+
+         if (tmp[0] == 'q' || tmp[0] == 'Q') {
+            ASKME_LOG ("User requested exit\n");
+            i = nquestions;
+            break;
          }
-         if (response > noptions) {
-            ASKME_LOG ("Selected answer [%zu] is not an option. Try again.\n", response);
-            continue;
+
+         bool not_number = false;
+         for (size_t j=0; tmp[j]; j++) {
+            if (!(isdigit (tmp[j])) && !(isspace (tmp[j]))) {
+               ASKME_LOG ("Input at [%s] is not a valid number. Enter only numbers seperated by spaces\n",
+                           tmp);
+               not_number = true;
+            }
          }
+         if (not_number)
+            continue;
+
+         size_t response = parse_numbers (input);
+         bool too_large = false;
+         for (size_t j=noptions; j<31; j++) {
+            if ((response >> j) & 0x01) {
+               ASKME_LOG ("Response [%zu] is not an option\n", j);
+               too_large = true;
+            }
+         }
+         if (too_large)
+            continue;
+
          responses[i] = response;
          answered = true;
       }
