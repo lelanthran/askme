@@ -29,6 +29,7 @@ extern "C" {
    char ***askme_parse_qfile (FILE *inf);
    void askme_randomise_questions (char ***questions);
    size_t askme_count_questions (char ***questions);
+   size_t askme_parse_answer (const char *answer_string);
 
 
 #ifdef __cplusplus

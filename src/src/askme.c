@@ -12,6 +12,9 @@
 #include "ds_str.h"
 
 
+#define SYMBOL_TICK           "✓"
+#define SYMBOL_CROSS          "✘"
+
 #define COLOR_DEFAULT         "\x1b[0m"
 
 #define COLOR_FG_BLACK        "\x1b[30m"
@@ -264,6 +267,17 @@ int main (int argc, char **argv)
 
    // TODO: Need to now grade the test by comparing the bitmap in responses[i]
    // to the bitmap stored as a string in the questions[i][2] field
+   size_t correct = 0;
+   for (size_t i=0; i<nquestions; i++) {
+      size_t answer = askme_parse_answer (questions[i][ASKME_QIDX_ANSBMP]);
+      printf ("%s: ", questions[i][ASKME_QIDX_QUESTION]);
+      if (answer == responses[i]) {
+         printf ("[" COLOR_FG_GREEN SYMBOL_TICK COLOR_DEFAULT "]\n");
+         correct++;
+         continue;
+      }
+      printf ("[" COLOR_FG_RED SYMBOL_CROSS COLOR_DEFAULT "]\n");
+   }
 
    ret = EXIT_SUCCESS;
 

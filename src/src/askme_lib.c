@@ -352,3 +352,17 @@ size_t askme_count_questions (char ***questions)
    }
    return ret;
 }
+
+size_t askme_parse_answer (const char *answer_string)
+{
+   size_t ret = 0;
+   for (size_t i=0; answer_string && answer_string[i]; i++) {
+      if (answer_string[i] == '1')     ret |= (1 << i);
+      if (answer_string[i] == '0')     ret = ret;  // Do nothing
+      if (answer_string[i]!='0' && answer_string[i]!='1') {
+         ASKME_LOG ("Warning: answer template [%s] contains a '%c'. Only zeros and ones are allowed\n",
+                    answer_string, answer_string[i]);
+      }
+   }
+   return ret;
+}
