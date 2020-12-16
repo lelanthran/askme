@@ -11,25 +11,6 @@
 
 #include "ds_str.h"
 
-void randomise_array (void **array, size_t nitems)
-{
-   static int seed = 0;
-
-   srand (seed);
-
-   if (!seed) {
-      // seed = time (NULL);
-      // srand (seed);
-   }
-
-   for (size_t i=0; array[i]; i++) {
-      size_t target = rand () % nitems;
-      void *tmp = array[i];
-      array[i] = array[target];
-      array[target] = tmp;
-   }
-}
-
 #define SETBIT(num,idx)          (num |= (1 << idx))
 #define CLRBIT(num,idx)          (num = num & ~(1 << idx))
 #define TSTBIT(num,idx)          (num & (1 << idx))
@@ -190,7 +171,7 @@ int main (int argc, char **argv)
    }
 
    // Randomise the array
-   randomise_array ((void **)questions, total_questions);
+   askme_randomise_questions (questions);
 
 
    // Generate the array to store the user responses

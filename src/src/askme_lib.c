@@ -320,3 +320,35 @@ errorexit:
 
    return ret;
 }
+
+void askme_randomise_questions (char ***questions)
+{
+   static int seed = 0;
+
+   srand (seed);
+
+   if (!seed) {
+      // seed = time (NULL);
+      // srand (seed);
+   }
+
+   size_t nitems = askme_count_questions (questions);
+   for (size_t i=0; questions[i]; i++) {
+      size_t target = rand () % nitems;
+      void *tmp = questions[i];
+      questions[i] = questions[target];
+      questions[target] = tmp;
+   }
+}
+
+size_t askme_count_questions (char ***questions)
+{
+   size_t ret = 0;
+   if (!questions)
+      return 0;
+
+   for (size_t i=0; questions[i]; i++) {
+      ret++;
+   }
+   return ret;
+}

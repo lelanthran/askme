@@ -23,6 +23,8 @@ extern "C" {
    char **askme_list_topics (void);
    char ***askme_load_questions (const char *topic);
    char ***askme_parse_qfile (FILE *inf);
+   void askme_randomise_questions (char ***questions);
+   size_t askme_count_questions (char ***questions);
 
 
 #ifdef __cplusplus
