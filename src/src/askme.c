@@ -11,6 +11,27 @@
 
 #include "ds_str.h"
 
+
+#define COLOR_DEFAULT         "\x1b[0m"
+
+#define COLOR_FG_BLACK        "\x1b[30m"
+#define COLOR_FG_RED          "\x1b[31m"
+#define COLOR_FG_GREEN        "\x1b[32m"
+#define COLOR_FG_YELLOW       "\x1b[33m"
+#define COLOR_FG_BLUE         "\x1b[34m"
+#define COLOR_FG_CYAN         "\x1b[35m"
+#define COLOR_FG_MAGENTA      "\x1b[36m"
+#define COLOR_FG_WHITE        "\x1b[37m"
+
+#define COLOR_BG_BLACK        "\x1b[40m"
+#define COLOR_BG_RED          "\x1b[41m"
+#define COLOR_BG_GREEN        "\x1b[42m"
+#define COLOR_BG_YELLOW       "\x1b[43m"
+#define COLOR_BG_BLUE         "\x1b[44m"
+#define COLOR_BG_CYAN         "\x1b[45m"
+#define COLOR_BG_MAGENTA      "\x1b[46m"
+#define COLOR_BG_WHITE        "\x1b[47m"
+
 size_t parse_numbers (const char *string)
 {
    size_t ret = 0;
@@ -121,12 +142,17 @@ int main (int argc, char **argv)
       char **topics = askme_list_topics ();
       size_t ntopics = 0;
       if (!topics || !topics[0]) {
-         ASKME_LOG ("Failed to find any topics. Maybe you should create some topic files\n"
-                    "in the directory '$(HOME)/.askme/topics'.\n");
+         ASKME_LOG (COLOR_FG_RED
+                    "Failed to find any topics. Maybe you should create some topic files\n"
+                    "in the directory '$(HOME)/.askme/topics'."
+                    COLOR_DEFAULT "\n");
          goto errorexit;
       }
 
-      printf ("Choose a topic from below (type in the number of the topic)\n");
+      printf (COLOR_BG_BLUE COLOR_FG_BLACK
+              "Choose a topic from below (type in the number of the topic)"
+              COLOR_DEFAULT "\n");
+
       for (size_t i=0; topics && topics[i]; i++) {
          printf ("%zu: %s\n", i+1, topics[i]);
          ntopics++;
@@ -136,11 +162,11 @@ int main (int argc, char **argv)
       size_t topic_number;
       fgets (input, sizeof input, stdin);
       if ((sscanf (input, "%zu", &topic_number))!=1) {
-         ASKME_LOG ("Failed to read a topic number, aborting\n");
+         ASKME_LOG (COLOR_FG_RED "Failed to read a topic number, aborting" COLOR_DEFAULT "\n");
          goto errorexit;
       }
       if (!topic_number || topic_number > ntopics) {
-         ASKME_LOG ("Topic [%zu] does not exist\n", topic_number);
+         ASKME_LOG (COLOR_FG_RED "Topic [%zu] does not exist" COLOR_DEFAULT "\n", topic_number);
          goto errorexit;
       }
       free_topic = true;
@@ -153,7 +179,7 @@ int main (int argc, char **argv)
 
    printf ("Seeking %zu questions from topic [%s]\n", nquestions, topic);
    if (!(questions = askme_load_questions (topic))) {
-      ASKME_LOG ("Failed to load questions from [%s]\n", topic);
+      ASKME_LOG (COLOR_FG_RED "Failed to load questions from [%s]" COLOR_DEFAULT "\n", topic);
       goto errorexit;
    }
 
@@ -168,7 +194,8 @@ int main (int argc, char **argv)
 
    // Generate the array to store the user responses
    if (!(responses = calloc (total_questions, sizeof *responses))) {
-      ASKME_LOG ("OOM error: Failed to allocate response array of %zu elements\n",
+      ASKME_LOG (COLOR_FG_RED "OOM error: Failed to allocate response array of %zu elements"
+                 COLOR_DEFAULT "\n",
                  total_questions);
       goto errorexit;
    }
@@ -194,7 +221,7 @@ int main (int argc, char **argv)
          tmp = input;
 
          if (tmp[0] == 'q' || tmp[0] == 'Q') {
-            ASKME_LOG ("User requested exit\n");
+            ASKME_LOG (COLOR_BG_RED COLOR_FG_BLACK "User requested exit." COLOR_DEFAULT "\n");
             i = nquestions;
             break;
          }
@@ -202,8 +229,9 @@ int main (int argc, char **argv)
          bool not_number = false;
          for (size_t j=0; tmp[j]; j++) {
             if (!(isdigit (tmp[j])) && !(isspace (tmp[j]))) {
-               ASKME_LOG ("Input at [%s] is not a valid number. Enter only numbers seperated by spaces\n",
-                           &tmp[j]);
+               ASKME_LOG (COLOR_FG_RED "Input at [%s] is not a valid number. Enter numbers separated by spaces"
+                          COLOR_DEFAULT "\n",
+                          &tmp[j]);
                not_number = true;
             }
          }
@@ -217,7 +245,7 @@ int main (int argc, char **argv)
          bool too_large = false;
          for (size_t j=noptions+1; j<31; j++) {
             if (ASKME_TSTBIT (response, j)) {
-               ASKME_LOG ("Response [%zu] is not an option\n", j);
+               ASKME_LOG (COLOR_FG_RED "Response [%zu] is not an option" COLOR_DEFAULT "\n", j);
                too_large = true;
             }
          }
@@ -225,7 +253,7 @@ int main (int argc, char **argv)
             continue;
 
          if (ASKME_TSTBIT (response, 0)) {
-            ASKME_LOG ("Response [0] is not an option\n");
+            ASKME_LOG (COLOR_FG_RED "Response [0] is not an option" COLOR_DEFAULT "\n");
             continue;
          }
 
@@ -236,16 +264,6 @@ int main (int argc, char **argv)
 
    // TODO: Need to now grade the test by comparing the bitmap in responses[i]
    // to the bitmap stored as a string in the questions[i][2] field
-
-
-   // Testing that we have all the results
-   for (size_t i=0; questions[i]; i++) {
-      printf ("%zu: ", i);
-      for (size_t j=0; questions[i][j]; j++) {
-         printf ("[%s] ", questions[i][j]);
-      }
-      printf ("\n");
-   }
 
    ret = EXIT_SUCCESS;
 
