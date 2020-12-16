@@ -9,6 +9,10 @@
    printf (__VA_ARGS__);\
 } while (0)
 
+#define ASKME_SETBIT(num,idx)          (num |= (1 << idx))
+#define ASKME_CLRBIT(num,idx)          (num = num & ~(1 << idx))
+#define ASKME_TSTBIT(num,idx)          (num & (1 << idx))
+
 
 #define ASKME_QIDX_QUESTION      (0)
 #define ASKME_QIDX_ANSBMP        (1)

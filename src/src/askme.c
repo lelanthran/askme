@@ -11,10 +11,6 @@
 
 #include "ds_str.h"
 
-#define SETBIT(num,idx)          (num |= (1 << idx))
-#define CLRBIT(num,idx)          (num = num & ~(1 << idx))
-#define TSTBIT(num,idx)          (num & (1 << idx))
-
 size_t parse_numbers (const char *string)
 {
    size_t ret = 0;
@@ -25,7 +21,7 @@ size_t parse_numbers (const char *string)
          tmp++;
       }
       sscanf (tmp, "%zu", &number);
-      SETBIT (ret, number);
+      ASKME_SETBIT (ret, number);
       while (*tmp && isdigit (*tmp)) {
          tmp++;
       }
@@ -161,18 +157,14 @@ int main (int argc, char **argv)
       goto errorexit;
    }
 
-   size_t total_questions = 0;
-   for (size_t i=0; questions[i]; i++) {
-      total_questions++;
-   }
-
+   // Limit number of questions to what we actually have.
+   size_t total_questions = askme_count_questions (questions);
    if (nquestions > total_questions) {
       nquestions = total_questions;
    }
 
    // Randomise the array
    askme_randomise_questions (questions);
-
 
    // Generate the array to store the user responses
    if (!(responses = calloc (total_questions, sizeof *responses))) {
@@ -182,11 +174,10 @@ int main (int argc, char **argv)
    }
    memset (responses, 0xff, sizeof *responses);
 
-
    // Print the questions and store the responses
    for (size_t i=0; i<nquestions; i++) {
       bool answered = false;
-      while (!answered) {
+      while (!answered && !feof (stdin) && !ferror (stdin)) {
          size_t noptions = 0;
          printf ("Q-%05zu) %s\n", i+1, questions[i][ASKME_QIDX_QUESTION]);
          for (size_t j=2; questions[i][j]; j++) {
@@ -225,7 +216,7 @@ int main (int argc, char **argv)
          // ASKME_LOG ("Response = [%s]\n", buf);
          bool too_large = false;
          for (size_t j=noptions+1; j<31; j++) {
-            if (TSTBIT (response, j)) {
+            if (ASKME_TSTBIT (response, j)) {
                ASKME_LOG ("Response [%zu] is not an option\n", j);
                too_large = true;
             }
@@ -233,7 +224,7 @@ int main (int argc, char **argv)
          if (too_large)
             continue;
 
-         if (TSTBIT (response, 0)) {
+         if (ASKME_TSTBIT (response, 0)) {
             ASKME_LOG ("Response [0] is not an option\n");
             continue;
          }
