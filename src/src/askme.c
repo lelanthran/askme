@@ -272,11 +272,23 @@ int main (int argc, char **argv)
       size_t answer = askme_parse_answer (questions[i][ASKME_QIDX_ANSBMP]);
       printf ("%s: ", questions[i][ASKME_QIDX_QUESTION]);
       if (answer == responses[i]) {
-         printf ("[" COLOR_FG_GREEN SYMBOL_TICK COLOR_DEFAULT "]\n");
+         printf ("[" COLOR_FG_GREEN SYMBOL_TICK COLOR_DEFAULT "]: %s : ", questions[i][ASKME_QIDX_ANSBMP]);
+         char buf[65];
+         printbin (answer, buf);
+         ASKME_LOG ("[Expected %s]", buf);
+         memset (buf, 0, sizeof buf);
+         printbin (responses[i], buf);
+         ASKME_LOG ("[Response %s]\n", buf);
          correct++;
          continue;
       }
-      printf ("[" COLOR_FG_RED SYMBOL_CROSS COLOR_DEFAULT "]\n");
+      printf ("[" COLOR_FG_RED SYMBOL_CROSS COLOR_DEFAULT "]: %s : ", questions[i][ASKME_QIDX_ANSBMP]);
+         char buf[65];
+         printbin (answer, buf);
+         ASKME_LOG ("[Expected %s]", buf);
+         memset (buf, 0, sizeof buf);
+         printbin (responses[i], buf);
+         ASKME_LOG ("[Response %s]\n", buf);
    }
 
    ret = EXIT_SUCCESS;

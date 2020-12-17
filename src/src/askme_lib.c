@@ -323,7 +323,7 @@ errorexit:
 
 void askme_randomise_questions (char ***questions)
 {
-   static int seed = 0;
+   static int seed = 9;
 
    srand (seed);
 
@@ -353,6 +353,18 @@ size_t askme_count_questions (char ***questions)
    return ret;
 }
 
+static size_t reversebits (size_t n)
+{
+   size_t ret = 0;
+   for (int i=sizeof (size_t); i>=0; i--) {
+      if ((n >> i) & 1) {
+         ret |= 1;
+      }
+      ret = ret << 1;
+   }
+   return ret;
+}
+
 size_t askme_parse_answer (const char *answer_string)
 {
    size_t ret = 0;
@@ -364,5 +376,5 @@ size_t askme_parse_answer (const char *answer_string)
                     answer_string, answer_string[i]);
       }
    }
-   return ret;
+   return reversebits (ret);
 }
