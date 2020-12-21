@@ -268,27 +268,38 @@ int main (int argc, char **argv)
    // TODO: Need to now grade the test by comparing the bitmap in responses[i]
    // to the bitmap stored as a string in the questions[i][2] field
    size_t correct = 0;
+   // First, print out all the correct answers
    for (size_t i=0; i<nquestions; i++) {
       size_t answer = askme_parse_answer (questions[i][ASKME_QIDX_ANSBMP]);
-      printf ("%s: ", questions[i][ASKME_QIDX_QUESTION]);
       if (answer == responses[i]) {
-         printf ("[" COLOR_FG_GREEN SYMBOL_TICK COLOR_DEFAULT "]: %s : ", questions[i][ASKME_QIDX_ANSBMP]);
+         printf ("%s: ", questions[i][ASKME_QIDX_QUESTION]);
+         printf ("[" COLOR_FG_GREEN SYMBOL_TICK COLOR_DEFAULT "]\n");
+#if 0
          char buf[65];
          printbin (answer, buf);
          ASKME_LOG ("[Expected %s]", buf);
          memset (buf, 0, sizeof buf);
          printbin (responses[i], buf);
          ASKME_LOG ("[Response %s]\n", buf);
+#endif
          correct++;
-         continue;
       }
-      printf ("[" COLOR_FG_RED SYMBOL_CROSS COLOR_DEFAULT "]: %s : ", questions[i][ASKME_QIDX_ANSBMP]);
+   }
+   for (size_t i=0; i<nquestions; i++) {
+      // Finally, print out all the wrong answers
+      size_t answer = askme_parse_answer (questions[i][ASKME_QIDX_ANSBMP]);
+      if (answer != responses[i]) {
+         printf ("%s: ", questions[i][ASKME_QIDX_QUESTION]);
+         printf ("[" COLOR_FG_RED SYMBOL_CROSS COLOR_DEFAULT "]");
+#if 0
          char buf[65];
          printbin (answer, buf);
          ASKME_LOG ("[Expected %s]", buf);
          memset (buf, 0, sizeof buf);
          printbin (responses[i], buf);
          ASKME_LOG ("[Response %s]\n", buf);
+#endif
+      }
    }
 
    ret = EXIT_SUCCESS;
