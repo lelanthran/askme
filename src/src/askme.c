@@ -272,7 +272,7 @@ int main (int argc, char **argv)
    for (size_t i=0; i<nquestions; i++) {
       size_t answer = askme_parse_answer (questions[i][ASKME_QIDX_ANSBMP]);
       if (answer == responses[i]) {
-         printf ("%s: ", questions[i][ASKME_QIDX_QUESTION]);
+         printf ("Q-%05zu) %s: ", i, questions[i][ASKME_QIDX_QUESTION]);
          printf ("[" COLOR_FG_GREEN SYMBOL_TICK COLOR_DEFAULT "]\n");
 #if 0
          char buf[65];
@@ -289,8 +289,25 @@ int main (int argc, char **argv)
       // Finally, print out all the wrong answers
       size_t answer = askme_parse_answer (questions[i][ASKME_QIDX_ANSBMP]);
       if (answer != responses[i]) {
-         printf ("%s: ", questions[i][ASKME_QIDX_QUESTION]);
-         printf ("[" COLOR_FG_RED SYMBOL_CROSS COLOR_DEFAULT "]");
+         printf ("Q-%05zu) %s: ", i+1, questions[i][ASKME_QIDX_QUESTION]);
+         printf ("[" COLOR_FG_RED SYMBOL_CROSS COLOR_DEFAULT "]\n");
+         for (size_t j=ASKME_QIDX_OPTION_OFFS; questions[i][j]; j++) {
+            size_t q_index = (j+1) - ASKME_QIDX_OPTION_OFFS;
+            bool show_tick = false;
+
+            printf ("   %s 0x%02x 0x%02x ", questions[i][j], answer, responses[i]);
+            if (ASKME_TSTBIT (answer, q_index) && ASKME_TSTBIT (responses[i], q_index)) {
+               show_tick = true;
+            }
+            if (!(ASKME_TSTBIT (answer, q_index)) && !(ASKME_TSTBIT (responses[i], q_index))) {
+               show_tick = true;
+            }
+            if (show_tick) {
+               printf ("[" COLOR_FG_GREEN SYMBOL_TICK COLOR_DEFAULT "]\n");
+            } else {
+               printf ("[" COLOR_FG_RED SYMBOL_CROSS COLOR_DEFAULT "]\n");
+            }
+         }
 #if 0
          char buf[65];
          printbin (answer, buf);
