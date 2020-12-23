@@ -14,6 +14,7 @@
 
 #define SYMBOL_TICK           "✓"
 #define SYMBOL_CROSS          "✘"
+#define SYMBOL_CIRCLE         "⦿"
 
 #define COLOR_DEFAULT         "\x1b[0m"
 
@@ -293,20 +294,17 @@ int main (int argc, char **argv)
          printf ("[" COLOR_FG_RED SYMBOL_CROSS COLOR_DEFAULT "]\n");
          for (size_t j=ASKME_QIDX_OPTION_OFFS; questions[i][j]; j++) {
             size_t q_index = (j+1) - ASKME_QIDX_OPTION_OFFS;
-            bool show_tick = false;
 
-            printf ("   %s 0x%02x 0x%02x ", questions[i][j], answer, responses[i]);
-            if (ASKME_TSTBIT (answer, q_index) && ASKME_TSTBIT (responses[i], q_index)) {
-               show_tick = true;
-            }
-            if (!(ASKME_TSTBIT (answer, q_index)) && !(ASKME_TSTBIT (responses[i], q_index))) {
-               show_tick = true;
-            }
-            if (show_tick) {
-               printf ("[" COLOR_FG_GREEN SYMBOL_TICK COLOR_DEFAULT "]\n");
+            printf ("   %s ", questions[i][j]);
+            if (ASKME_TSTBIT (answer, q_index)) {
+               printf ("[" COLOR_FG_GREEN SYMBOL_TICK COLOR_DEFAULT "]");
             } else {
-               printf ("[" COLOR_FG_RED SYMBOL_CROSS COLOR_DEFAULT "]\n");
+               printf ("[" COLOR_FG_RED SYMBOL_CROSS COLOR_DEFAULT "]");
             }
+            if ((ASKME_TSTBIT (responses[i], q_index))) {
+               printf ("[" COLOR_FG_BLUE SYMBOL_CIRCLE COLOR_DEFAULT "]");
+            }
+            printf ("\n");
          }
 #if 0
          char buf[65];
