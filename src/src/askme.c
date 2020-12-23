@@ -45,7 +45,8 @@ size_t parse_numbers (const char *string)
       while (*tmp && !(isdigit (*tmp))) {
          tmp++;
       }
-      sscanf (tmp, "%zu", &number);
+      if ((sscanf (tmp, "%zu", &number))!=1)
+         continue;
       ASKME_SETBIT (ret, number);
       while (*tmp && isdigit (*tmp)) {
          tmp++;
@@ -273,16 +274,8 @@ int main (int argc, char **argv)
    for (size_t i=0; i<nquestions; i++) {
       size_t answer = askme_parse_answer (questions[i][ASKME_QIDX_ANSBMP]);
       if (answer == responses[i]) {
-         printf ("Q-%05zu) %s: ", i, questions[i][ASKME_QIDX_QUESTION]);
+         printf ("Q-%05zu) %s: ", i+1, questions[i][ASKME_QIDX_QUESTION]);
          printf ("[" COLOR_FG_GREEN SYMBOL_TICK COLOR_DEFAULT "]\n");
-#if 0
-         char buf[65];
-         printbin (answer, buf);
-         ASKME_LOG ("[Expected %s]", buf);
-         memset (buf, 0, sizeof buf);
-         printbin (responses[i], buf);
-         ASKME_LOG ("[Response %s]\n", buf);
-#endif
          correct++;
       }
    }
