@@ -116,6 +116,10 @@ int main (int argc, char **argv)
    uint64_t *responses = NULL;
    static char input[1024];
 
+   char *out_option = NULL;
+   const char *out_template = NULL;
+   const char *out_response = NULL;
+
    if (!prompt || prompt[0] == 0) {
       prompt = "> ";
    }
@@ -283,30 +287,42 @@ int main (int argc, char **argv)
       // Finally, print out all the wrong answers
       size_t answer = askme_parse_answer (questions[i][ASKME_QIDX_ANSBMP]);
       if (answer != responses[i]) {
+
          printf ("Q-%05zu) %s: ", i+1, questions[i][ASKME_QIDX_QUESTION]);
          printf ("[" COLOR_FG_RED SYMBOL_CROSS COLOR_DEFAULT "]\n");
          for (size_t j=ASKME_QIDX_OPTION_OFFS; questions[i][j]; j++) {
             size_t q_index = (j+1) - ASKME_QIDX_OPTION_OFFS;
 
-            printf ("   %s ", questions[i][j]);
+            free (out_option); out_option = NULL;
+
+            // Format the text of the option
+            if (!(out_option = ds_str_dup (questions[i][j]))) {
+               ASKME_LOG ("OOM error\n");
+               goto errorexit;
+            }
+            for (size_t i=strlen (out_option); i<40; i++) {
+               if (!(ds_str_append (&out_option, "_", NULL))) {
+                  ASKME_LOG ("OOM error\n");
+                  goto errorexit;
+               }
+            }
+
+            // Format the template
+            out_template = "   ";
             if (ASKME_TSTBIT (answer, q_index)) {
-               printf ("[" COLOR_FG_GREEN SYMBOL_TICK COLOR_DEFAULT "]");
-            } else {
-               printf ("[" COLOR_FG_RED SYMBOL_CROSS COLOR_DEFAULT "]");
+               out_template = "[" COLOR_FG_BLUE SYMBOL_CIRCLE COLOR_DEFAULT "]";
             }
+
+            // Format the response given
+            out_response = "   ";
             if ((ASKME_TSTBIT (responses[i], q_index))) {
-               printf ("[" COLOR_FG_BLUE SYMBOL_CIRCLE COLOR_DEFAULT "]");
+               out_response = ("[" COLOR_FG_GREEN SYMBOL_CIRCLE COLOR_DEFAULT "]");
             }
+            printf ("   %s", out_option); printf (" ");
+            printf (out_template);        printf (" ");
+            printf (out_response);        printf (" ");
             printf ("\n");
          }
-#if 0
-         char buf[65];
-         printbin (answer, buf);
-         ASKME_LOG ("[Expected %s]", buf);
-         memset (buf, 0, sizeof buf);
-         printbin (responses[i], buf);
-         ASKME_LOG ("[Response %s]\n", buf);
-#endif
       }
    }
 
@@ -315,6 +331,7 @@ int main (int argc, char **argv)
 errorexit:
 
    free (responses);
+   free (out_option);
 
    if (free_topic)
       free (topic);
