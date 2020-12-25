@@ -14,7 +14,7 @@
 
 #define SYMBOL_TICK           "✓"
 #define SYMBOL_CROSS          "✘"
-#define SYMBOL_CIRCLE         "⦿"
+#define SYMBOL_CIRCLE         "⬤"
 
 #define COLOR_DEFAULT         "\x1b[0m"
 
