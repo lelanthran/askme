@@ -271,8 +271,6 @@ int main (int argc, char **argv)
       }
    }
 
-   // TODO: Need to now grade the test by comparing the bitmap in responses[i]
-   // to the bitmap stored as a string in the questions[i][2] field
    size_t correct = 0;
    // First, print out all the correct answers
    for (size_t i=0; i<nquestions; i++) {
@@ -324,6 +322,13 @@ int main (int argc, char **argv)
             fputs ("\n", stdout);
          }
       }
+   }
+
+   float perc = ((float)correct/nquestions) * 100;
+   printf ("Final grade: %zu/%zu (%.0f%%)\n", correct, nquestions, perc);
+
+   if (!(askme_save_grade (topic, correct, nquestions))) {
+      ASKME_LOG ("Warning: Failed to save this grade: %m\n");
    }
 
    ret = EXIT_SUCCESS;

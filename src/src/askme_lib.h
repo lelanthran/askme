@@ -3,6 +3,7 @@
 #define H_ASKME_LIB
 
 #include <stdio.h>
+#include <stdbool.h>
 
 #define ASKME_LOG(...)     do {\
    printf ("%s:%i:", __FILE__, __LINE__);\
@@ -30,6 +31,7 @@ extern "C" {
    void askme_randomise_questions (char ***questions);
    size_t askme_count_questions (char ***questions);
    size_t askme_parse_answer (const char *answer_string);
+   bool askme_save_grade (const char *topic, size_t correct, size_t total);
 
 
 #ifdef __cplusplus

@@ -378,3 +378,8 @@ size_t askme_parse_answer (const char *answer_string)
    }
    return reversebits (ret);
 }
+
+bool askme_save_grade (const char *topic, size_t correct, size_t total)
+{
+   return false;
+}
