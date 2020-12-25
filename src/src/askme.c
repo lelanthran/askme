@@ -296,7 +296,7 @@ int main (int argc, char **argv)
             free (out_option); out_option = NULL;
 
             // Format the text of the option
-            if (!(out_option = ds_str_dup (questions[i][j]))) {
+            if (!(out_option = ds_str_cat ("   ", questions[i][j], NULL))) {
                ASKME_LOG ("OOM error\n");
                goto errorexit;
             }
@@ -318,10 +318,10 @@ int main (int argc, char **argv)
             if ((ASKME_TSTBIT (responses[i], q_index))) {
                out_response = ("[" COLOR_FG_GREEN SYMBOL_CIRCLE COLOR_DEFAULT "]");
             }
-            printf ("   %s", out_option); printf (" ");
-            printf (out_template);        printf (" ");
-            printf (out_response);        printf (" ");
-            printf ("\n");
+            fputs (out_option, stdout);   fputs (" ", stdout);
+            fputs (out_template, stdout); fputs (" ", stdout);
+            fputs (out_response, stdout); fputs (" ", stdout);
+            fputs ("\n", stdout);
          }
       }
    }
