@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include <time.h>
+#include <inttypes.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -381,5 +383,52 @@ size_t askme_parse_answer (const char *answer_string)
 
 bool askme_save_grade (const char *topic, size_t correct, size_t total)
 {
-   return false;
+   // tab-separated fields: date-epoch, date-display, correct, total, percentage
+   int64_t date_epoch = time (NULL);
+   float perc = ((float)correct / (float)total) * 100.0;
+
+   char fld_date_epoch [50];
+   char fld_date_display [50];
+   char fld_correct[50];
+   char fld_total[50];
+   char fld_perc[50];
+
+   memset (fld_date_display, 0, sizeof fld_date_display);
+
+   snprintf (fld_date_epoch, sizeof fld_date_epoch, "%" PRIu64, date_epoch);
+   strncpy (fld_date_display, ctime ((time_t *)&date_epoch), sizeof fld_date_display);
+   snprintf (fld_correct, sizeof fld_correct, "%zu", correct);
+   snprintf (fld_total, sizeof fld_total, "%zu", total);
+   snprintf (fld_perc, sizeof fld_perc, "%.0f", perc);
+
+   char *nl = strchr (fld_date_display, '\n');
+   if (nl)
+      *nl = 0;
+
+   nl = strchr (fld_date_display, '\r');
+   if (nl)
+      *nl = 0;
+
+   char *fname = askme_get_subdir ("grades/", topic, NULL);
+   if (!fname)
+      return false;
+
+   FILE *outf = fopen (fname, "at");
+   if (!outf) {
+      free (fname);
+      ASKME_LOG ("Failed to open [%s]: %m\n", fname);
+      return false;
+   }
+
+   fprintf (outf, "%s\t%s\t%s\t%s\t%s\n",
+                  fld_date_epoch,
+                  fld_date_display,
+                  fld_correct,
+                  fld_total,
+                  fld_perc);
+
+   free (fname);
+   fclose (outf);
+
+   return true;
 }
