@@ -1,0 +1,4 @@
+# askme
+A small tool to help me learn stuff and track my progress.
+
+This is a very different project to the prototype version (0.0.1).
