@@ -1,4 +1,13 @@
-# askme
-A small tool to help me learn stuff and track my progress.
 
-This is a very different project to the prototype version (0.0.1).
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="styles.css" />
+#+HTML_HEAD: <script type="text/javascript" src="scripts.js"> </script>
+#+OPTIONS: '
+#+TODO: TODO IN-PROGESS BLOCKED | DONE
+#+OPTIONS: toc:nil num:nil
+
+#+title: ASKME: Implementation of Casual Spaced-Repetition Learning Assistant
+#+author: Lelanthran Manickum
+
+* [/] Tasklist
+ 1. [ ] Flesh out requirements some more.
+
