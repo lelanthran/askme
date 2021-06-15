@@ -172,7 +172,7 @@ int main (void) // for now, no parameters
       }
 
       // 5. Save the database to file.
-      if (!(askme_db_save (qfile))) {
+      if (!(askme_db_save (database, qfile))) {
          ASKME_LOG ("Failed to save [%s]; %m\n", qfile);
          break;
       }

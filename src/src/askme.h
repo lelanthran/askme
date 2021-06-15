@@ -12,12 +12,12 @@
 
 // Data is stored within files in $DATADIR. Each files name is a different topic. Each file is a
 // collection of csv records. Each record has the following fields:
-//    question
-//    answer
-//    creation-timestamp
-//    last-asked-timestamp
-//    presentation-counter
-//    correct-counter
+// 0  question
+// 1  answer
+// 2  creation-timestamp
+// 3  last-asked-timestamp
+// 4  presentation-counter
+// 5  correct-counter
 
 #ifdef __cplusplus
 extern "C" {
@@ -29,7 +29,7 @@ extern "C" {
 
    // Load and free the questions
    char ***askme_db_load (const char *fname);
-   int askme_db_save (const char *qfile);
+   int askme_db_save (char ***database, const char *qfile);
    void askme_db_del (char ****database);
    int askme_db_add (char ***database, const char *question, const char *answer);
    int askme_db_inc_presentation (char ***database, const char *question);

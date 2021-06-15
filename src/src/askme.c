@@ -126,8 +126,27 @@ errorexit:
    return ret;
 }
 
-   ///////////////////////////////////////////////////////////////////////////////////////////////
-   int askme_db_save (const char *qfile);
+int askme_db_save (char ***database, const char *qfile)
+{
+   if (!database || !qfile)
+      return -1;
+
+   FILE *outfile = NULL;
+
+   if (!(outfile = fopen (qfile, "wt")))
+      return -1;
+
+   for (size_t i=0; database[i]; i++) {
+      const char *delim = "";
+      for (size_t j=0; database[i][j]; j++) {
+         fprintf (outfile, "%s%s", delim, database[i][j]);
+         delim = ",";
+      }
+      fprintf (outfile, "\n");
+   }
+
+   return 0;
+}
 
 void askme_db_del (char ****database)
 {
@@ -230,9 +249,9 @@ int askme_db_inc_correct (char ***database, const char *question)
    return db_inc_field (database, question, 5);
 }
 
-   ///////////////////////////////////////////////////////////////////////////////////////////////
-   // Locate a suitable question
-   char **askme_question (char ***database);
+///////////////////////////////////////////////////////////////////////////////////////////////
+// Locate a suitable question
+char **askme_question (char ***database);
 
 void askme_question_del (char **question)
 {
