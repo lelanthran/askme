@@ -156,9 +156,11 @@ int main (void) // for now, no parameters
 
       //    4.b) If the answer is correct, update the database (correct-counter++)
       //    4.c) If the answer is incorrect, present the correct answer.
-      if ((strcasecmp (response[0], question[2]))==0) {
+      if ((strcasecmp (response[0], question[1]))==0) {
+         ASKME_LOG ("CORRECT!!! [%s:%s]\n", response[0], question[1]);
          askme_db_inc_correct (database, question[0]);
       } else {
+         ASKME_LOG ("INCORRECT!!! [%s:%s]\n", response[0], question[1]);
          free (correction_command);
          correction_command = NULL;
          askme_printf (&correction_command, "zenity --warning --no-wrap "

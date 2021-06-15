@@ -195,7 +195,6 @@ void askme_db_del (char ****database)
 
    for (size_t i=0; tmp[i]; i++) {
       for (size_t j=0; tmp[i][j]; j++) {
-         printf ("Freeing [%s]\n", tmp[i][j]);
          free (tmp[i][j]);
       }
       free (tmp[i]);
@@ -230,10 +229,28 @@ static size_t rec_nfields (char **rec)
    return ret;
 }
 
+#if 0
+static void dbdump (const char *label, char ***database)
+{
+   printf ("[%s]\n", label);
+   if (!database)
+      printf ("NULL Database\n");
+   for (size_t i=0; database[i]; i++) {
+      for (size_t j=0; database[i][j]; j++) {
+         printf ("%s, ", database[i][j]);
+      }
+      printf ("\n");
+   }
+}
+#endif
+
+
 bool askme_db_add (char ****database, const char *question, const char *answer)
 {
    char ***tmpdb = NULL;
-   size_t nrecords = db_nrecs (database);
+   size_t nrecords = db_nrecs (*database);
+
+   // dbdump ("Before addition", *database);
 
    if (!(tmpdb = realloc (*database, (sizeof *database) * (nrecords + 2))))
       return false;
@@ -258,6 +275,7 @@ bool askme_db_add (char ****database, const char *question, const char *answer)
    (*database)[nrecords] = newrec;
    nrecords++;
 
+   // dbdump ("After addition", *database);
 
    return true;
 }
@@ -345,16 +363,16 @@ int record_compare (const void *rec_lhs, const void *rec_rhs)
    ratio[0] = fratio[0];
    ratio[1] = fratio[1];
 
-   if (ratio[0] > ratio[1])
+   if (ratio[0] < ratio[1])
       return 1;
 
-   if (ratio[0] < ratio[1])
+   if (ratio[0] > ratio[1])
       return -1;
 
-   if (last_asked[0] > last_asked[1])
+   if (last_asked[0] < last_asked[1])
       return 1;
 
-   if (last_asked[0] < last_asked[1])
+   if (last_asked[0] > last_asked[1])
       return -1;
 
    return 0;
