@@ -56,8 +56,10 @@ char **askme_split_fields (const char *input, char delim)
 {
    size_t nfields = 1;
    const char *tmp = input;
-   while (tmp && (tmp = strchr (tmp, delim)))
+   while (tmp && (tmp = strchr (tmp, delim))) {
       nfields++;
+      tmp++;
+   }
 
    char **ret = calloc (nfields + 1, sizeof *ret);
    if (!ret)
@@ -87,6 +89,23 @@ char **askme_split_fields (const char *input, char delim)
    return ret;
 }
 
+bool askme_db_fillrecs (char ***database, size_t nrecs)
+{
+   for (size_t i=0; database[i]; i++) {
+      char **tmprec = realloc (database[i], (sizeof *tmprec) * (nrecs + 1));
+      if (!tmprec)
+         return false;
+
+      for (size_t j=0; j<nrecs; j++) {
+         if (!tmprec[j]) {
+            tmprec[j] = strdup ("1");
+            tmprec[j+1] = NULL;
+         }
+      }
+      database[i] = tmprec;
+   }
+   return true;
+}
 
 char ***askme_db_load (const char *fname)
 {
@@ -105,19 +124,26 @@ char ***askme_db_load (const char *fname)
    }
 
    while (!feof (infile) && !ferror (infile) && (fgets (line, sizeof line -1, infile))) {
+      char *nl = strchr (line, '\n');
+      if (nl)
+         *nl = 0;
+
       char **record = askme_split_fields (line, '\t');
       if (!record)
          goto errorexit;
 
       nrecords++;
-      char ***tmp = realloc (ret, sizeof *ret * (nrecords + 1));
+      char ***tmp = realloc (ret, sizeof *ret * (nrecords + 2));
       if (!tmp)
          goto errorexit;
 
       ret = tmp;
-      ret[nrecords] = record;
-      ret[nrecords + 1] = NULL;
+      ret[nrecords - 1] = record;
+      ret[nrecords] = NULL;
    }
+
+   if (!(askme_db_fillrecs (ret, 7)))
+      goto errorexit;
 
    error = false;
 
@@ -128,6 +154,7 @@ errorexit:
 
    return ret;
 }
+
 
 int askme_db_save (char ***database, const char *qfile)
 {
@@ -181,6 +208,19 @@ static size_t db_nrecs (char ***database)
    return ret;
 }
 
+static size_t rec_nfields (char **rec)
+{
+   if (!rec)
+      return 0;
+
+   size_t ret = 0;
+   for (size_t i=0; rec[i]; i++) {
+      ret++;
+   }
+
+   return ret;
+}
+
 int askme_db_add (char ***database, const char *question, const char *answer)
 {
    char ***tmpdb = NULL;
@@ -224,18 +264,23 @@ static size_t find_question (char ***database, size_t from, const char *question
 
 int db_inc_field (char ***database, const char *question, size_t field)
 {
-   size_t index = (size_t)-1;
+   size_t index = (size_t)0;
    while ((index = find_question (database, index, question))!=(size_t)-1) {
       size_t num = 0;
       char sznum[27];
+      size_t nfields = rec_nfields (database[index]);
+
       sscanf (database[index][field], "%zu", &num);
       num++;
       snprintf (sznum, sizeof sznum, "%zu", num);
+
       char *tmp = database[index][field];
+
       if (!(database[index][field] = strdup (sznum))) {
          database[index][field] = tmp;
          return -1;
       }
+      index++;
       free (tmp);
    }
 
@@ -265,8 +310,14 @@ int record_compare (const void *rec_lhs, const void *rec_rhs)
 
    uint64_t last_asked[2] = {0, 0};
 
-   record[0] = (const char **)rec_lhs;
-   record[1] = (const char **)rec_rhs;
+   if (!rec_lhs && rec_rhs)
+      return 1;
+
+   if (rec_lhs && !rec_rhs)
+      return -1;
+
+   record[0] = *(const char ***)rec_lhs;
+   record[1] = *(const char ***)rec_rhs;
 
    sscanf (record[0][5], "%zu", &ccount[0]);
    sscanf (record[1][5], "%zu", &ccount[1]);
