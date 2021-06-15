@@ -4,6 +4,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include <time.h>
+#include <stdint.h>
+#include <inttypes.h>
 
 #include "askme.h"
 
@@ -249,9 +252,68 @@ int askme_db_inc_correct (char ***database, const char *question)
    return db_inc_field (database, question, 5);
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////
 // Locate a suitable question
-char **askme_question (char ***database);
+
+int record_compare (const void *rec_lhs, const void *rec_rhs)
+{
+   const char **record[] = { NULL, NULL };
+   size_t pcount[2] = { 1, 1 },
+          ccount[2] = { 1, 1 };
+   float fratio[2] = { 0.0, 0.0 };
+   size_t ratio[2] = { 0, 0 };
+
+   uint64_t last_asked[2] = {0, 0};
+
+   record[0] = (const char **)rec_lhs;
+   record[1] = (const char **)rec_rhs;
+
+   sscanf (record[0][5], "%zu", &ccount[0]);
+   sscanf (record[1][5], "%zu", &ccount[1]);
+
+   sscanf (record[0][4], "%zu", &pcount[0]);
+   sscanf (record[1][4], "%zu", &pcount[1]);
+
+   sscanf (record[0][3], "%" PRIu64, &last_asked[0]);
+   sscanf (record[1][3], "%" PRIu64, &last_asked[1]);
+
+   fratio[0] = (pcount[0] / ccount[0]) * 100.0;
+   fratio[1] = (pcount[1] / ccount[1]) * 100.0;
+
+   ratio[0] = fratio[0];
+   ratio[1] = fratio[1];
+
+   if (ratio[0] > ratio[1])
+      return 1;
+
+   if (ratio[0] < ratio[1])
+      return -1;
+
+   if (last_asked[0] > last_asked[1])
+      return 1;
+
+   if (last_asked[0] < last_asked[1])
+      return -1;
+
+   return 0;
+}
+
+char **askme_question (char ***database)
+{
+   if (!database)
+      return NULL;
+
+   size_t nrecs = db_nrecs (database);
+   if (nrecs <= 1)
+      return database[0];
+
+   // 1. Sort the database according to presentation:correct ratio, then by
+   //    last-asked date.
+   qsort (database, nrecs, sizeof *database, record_compare);
+
+   // 2. Return the question at the top of the file.
+   return database[0];
+}
 
 void askme_question_del (char **question)
 {
