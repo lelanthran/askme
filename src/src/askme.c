@@ -1,3 +1,6 @@
+#include <stdarg.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "askme.h"
 
@@ -37,7 +40,7 @@ size_t askme_printf (char **dst, const char *fmt, ...)
    va_list ap;
 
    va_start (ap, fmt);
-   size_t ret = ds_str_vprintf (dst, fmt, ap);
+   size_t ret = askme_vprintf (dst, fmt, ap);
    va_end (ap);
 
    return ret;

@@ -1,10 +1,14 @@
 
+#define _POSIX_C_SOURCE 200108
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
 
+
 #include <unistd.h>
+#include <strings.h>
 
 #include "askme.h"
 
