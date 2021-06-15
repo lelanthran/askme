@@ -151,6 +151,9 @@ char ***askme_db_load (const char *fname)
    error = false;
 
 errorexit:
+   if (infile)
+      fclose (infile);
+
    if (error) {
       askme_db_del (&ret);
    }
@@ -159,15 +162,15 @@ errorexit:
 }
 
 
-int askme_db_save (char ***database, const char *qfile)
+bool askme_db_save (char ***database, const char *qfile)
 {
    if (!database || !qfile)
-      return -1;
+      return false;
 
    FILE *outfile = NULL;
 
    if (!(outfile = fopen (qfile, "wt")))
-      return -1;
+      return false;
 
    for (size_t i=0; database[i]; i++) {
       const char *delim = "";
@@ -178,7 +181,9 @@ int askme_db_save (char ***database, const char *qfile)
       fprintf (outfile, "\n");
    }
 
-   return 0;
+   fclose (outfile);
+
+   return true;
 }
 
 void askme_db_del (char ****database)
@@ -225,34 +230,36 @@ static size_t rec_nfields (char **rec)
    return ret;
 }
 
-int askme_db_add (char ***database, const char *question, const char *answer)
+bool askme_db_add (char ****database, const char *question, const char *answer)
 {
    char ***tmpdb = NULL;
    size_t nrecords = db_nrecs (database);
 
-   if (!(tmpdb = realloc (database, (sizeof *database) * (nrecords + 1))))
-      return -1;
+   if (!(tmpdb = realloc (*database, (sizeof *database) * (nrecords + 2))))
+      return false;
 
-   database = tmpdb;
+   (*database) = tmpdb;
 
-   nrecords++;
-   database[nrecords + 1] = NULL;
+   (*database)[nrecords] = NULL;
+   (*database)[nrecords + 1] = NULL;
 
    char **newrec = calloc (6, sizeof *newrec);
    if (!newrec)
-      return -1;
+      return false;
 
    newrec [0] = strdup (question);
    newrec [1] = strdup (answer);
    if (!newrec[0] || !newrec[1]) {
-      return -1;
+      return false;
    }
 
    newrec[2] = newrec[3] = newrec[4] = newrec[5] = NULL;
 
-   database[nrecords] = newrec;
+   (*database)[nrecords] = newrec;
+   nrecords++;
 
-   return 0;
+
+   return true;
 }
 
 static size_t find_question (char ***database, size_t from, const char *question)
@@ -266,7 +273,7 @@ static size_t find_question (char ***database, size_t from, const char *question
    return (size_t)-1;
 }
 
-int db_inc_field (char ***database, const char *question, size_t field)
+bool db_inc_field (char ***database, const char *question, size_t field)
 {
    size_t index = (size_t)0;
    while ((index = find_question (database, index, question))!=(size_t)-1) {
@@ -282,21 +289,21 @@ int db_inc_field (char ***database, const char *question, size_t field)
 
       if (!(database[index][field] = strdup (sznum))) {
          database[index][field] = tmp;
-         return -1;
+         return false;
       }
       index++;
       free (tmp);
    }
 
-   return 0;
+   return true;
 }
 
-int askme_db_inc_presentation (char ***database, const char *question)
+bool askme_db_inc_presentation (char ***database, const char *question)
 {
    return db_inc_field (database, question, 4);
 }
 
-int askme_db_inc_correct (char ***database, const char *question)
+bool askme_db_inc_correct (char ***database, const char *question)
 {
    return db_inc_field (database, question, 5);
 }

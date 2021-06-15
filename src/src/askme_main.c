@@ -78,7 +78,7 @@ static int collect_response (const char *line, void *arg)
 
    char ***dst = arg;
 
-   askme_question_del (*dst);
+   // askme_question_del (*dst);
    *dst = askme_split_fields (line, '|');
 
    return *dst ? 1 : 0;
@@ -129,7 +129,7 @@ int main (void) // for now, no parameters
       }
 
       // 3. Choose a question (TODO: Maybe some parameters for this? Thresholds, etc)
-      askme_question_del (question);
+      // askme_question_del (question);
       question = askme_question (database);
 
       // 4. Present the question.
@@ -151,16 +151,11 @@ int main (void) // for now, no parameters
          break;
       }
 
-      //    4.a) If a new question is given, add it to the database
-      if (response[1] && response[2] && response[1][0] && response[2][0]) {
-         askme_db_add (database, response[1], response[2]);
-      }
-
-      //    4.b) Update the database (presentation-counter++)
+      //    4.a) Update the database (presentation-counter++)
       askme_db_inc_presentation (database, question[0]);
 
-      //    4.c) If the answer is correct, update the database (correct-counter++)
-      //    4.d) If the answer is incorrect, present the correct answer.
+      //    4.b) If the answer is correct, update the database (correct-counter++)
+      //    4.c) If the answer is incorrect, present the correct answer.
       if ((strcasecmp (response[0], question[2]))==0) {
          askme_db_inc_correct (database, question[0]);
       } else {
@@ -169,6 +164,11 @@ int main (void) // for now, no parameters
          askme_printf (&correction_command, "zenity --warning --no-wrap "
                                             "--text='Correct answer: [%s]'", question[1]);
          run_inferior (ignore_response, NULL, correction_command);
+      }
+
+      //    4.d) If a new question is given, add it to the database
+      if (response[1] && response[2] && response[1][0] && response[2][0]) {
+         askme_db_add (&database, response[1], response[2]);
       }
 
       // 5. Save the database to file.
@@ -189,7 +189,6 @@ int main (void) // for now, no parameters
    free (qfile);
    free (question_command);
    free (correction_command);
-   askme_question_del (question);
    askme_question_del (response);
 
    return EXIT_SUCCESS;

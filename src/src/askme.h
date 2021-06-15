@@ -3,6 +3,7 @@
 #define H_ASKME
 
 #include <stdio.h>
+#include <stdbool.h>
 
 #define ASKME_LOG(...)           do {\
    fprintf (stderr, "%s:%i:", __FILE__, __LINE__);\
@@ -29,11 +30,11 @@ extern "C" {
 
    // Load and free the questions
    char ***askme_db_load (const char *fname);
-   int askme_db_save (char ***database, const char *qfile);
+   bool askme_db_save (char ***database, const char *qfile);
    void askme_db_del (char ****database);
-   int askme_db_add (char ***database, const char *question, const char *answer);
-   int askme_db_inc_presentation (char ***database, const char *question);
-   int askme_db_inc_correct (char ***database, const char *question);
+   bool askme_db_add (char ****database, const char *question, const char *answer);
+   bool askme_db_inc_presentation (char ***database, const char *question);
+   bool askme_db_inc_correct (char ***database, const char *question);
 
    // Locate a suitable question
    char **askme_question (char ***database);
