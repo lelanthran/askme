@@ -91,6 +91,9 @@ char **askme_split_fields (const char *input, char delim)
 
 bool askme_db_fillrecs (char ***database, size_t nrecs)
 {
+   if (!database)
+      return false;
+
    for (size_t i=0; database[i]; i++) {
       char **tmprec = realloc (database[i], (sizeof *tmprec) * (nrecs + 1));
       if (!tmprec)
@@ -170,7 +173,7 @@ int askme_db_save (char ***database, const char *qfile)
       const char *delim = "";
       for (size_t j=0; database[i][j]; j++) {
          fprintf (outfile, "%s%s", delim, database[i][j]);
-         delim = ",";
+         delim = "\t";
       }
       fprintf (outfile, "\n");
    }
@@ -180,13 +183,14 @@ int askme_db_save (char ***database, const char *qfile)
 
 void askme_db_del (char ****database)
 {
-   if (database || !*database)
+   if (!database || !*database)
       return;
 
    char ***tmp = *database;
 
    for (size_t i=0; tmp[i]; i++) {
       for (size_t j=0; tmp[i][j]; j++) {
+         printf ("Freeing [%s]\n", tmp[i][j]);
          free (tmp[i][j]);
       }
       free (tmp[i]);

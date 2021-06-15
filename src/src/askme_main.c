@@ -104,7 +104,7 @@ int main (void) // for now, no parameters
 {
    // 1. Set the config values (duration between questions, etc).
    seconds_t question_interval = 5;
-   const char *datadir = "./";
+   const char *datadir = ".";
    const char *topic = "t-one.csv";
    char ***database = NULL;
    char *qfile = NULL;
