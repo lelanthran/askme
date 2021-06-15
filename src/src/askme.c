@@ -46,3 +46,48 @@ size_t askme_printf (char **dst, const char *fmt, ...)
    return ret;
 }
 
+char **askme_split_response (const char *input)
+{
+   size_t nfields = 0;
+   const char *tmp = input;
+   while (tmp && (tmp = strchr (tmp, '|')))
+      nfields++;
+
+   char **ret = calloc (nfields + 1, sizeof *ret);
+   if (!ret)
+      return NULL;
+
+   char *copy = strdup (input);
+   if (!copy) {
+      askme_question_del (ret);
+      return NULL;
+   }
+
+   char *field = strtok (copy, "|");
+   size_t i=0;
+
+   while (field) {
+      if (!(ret[i++] = strdup (field))) {
+         askme_question_del (ret);
+         free (copy);
+         return NULL;
+      }
+      field = strtok (NULL, "|");
+   }
+
+   free (copy);
+
+   return ret;
+}
+
+
+   char ***askme_db_load (const char *fname);
+   int askme_db_save (const char *qfile);
+   void askme_db_del (char ****questions);
+   int askme_db_add (char ***database, const char *question, const char *answer);
+   int askme_db_inc_presentation (char ***database, const char *question);
+   int askme_db_inc_correct (char ***database, const char *question);
+
+   // Locate a suitable question
+   char **askme_question (char ***database);
+   void askme_question_del (char **question);

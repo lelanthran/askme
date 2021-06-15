@@ -32,9 +32,9 @@
 
 typedef int (run_inferior_func_t) (const char *, void *);
 
-int run_inferior (run_inferior_func_t *callback,
-                  void                *argp,
-                  char                *command)
+static int run_inferior (run_inferior_func_t *callback,
+                         void                *argp,
+                         char                *command)
 {
    int ret = EXIT_FAILURE;
 
@@ -71,7 +71,7 @@ errorexit:
    return ret;
 }
 
-int collect_response (const char *line, void *arg)
+static int collect_response (const char *line, void *arg)
 {
    if (!arg)
       return -1;
@@ -84,7 +84,7 @@ int collect_response (const char *line, void *arg)
    return *dst ? 1 : 0;
 }
 
-int ignore_response (const char *line, void *arg)
+static int ignore_response (const char *line, void *arg)
 {
    (void)line;
    (void)arg;
@@ -189,6 +189,7 @@ int main (void) // for now, no parameters
    free (qfile);
    free (question_command);
    free (correction_command);
+   askme_question_del (question);
    askme_question_del (response);
 
    return EXIT_SUCCESS;
