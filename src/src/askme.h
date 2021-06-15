@@ -25,12 +25,12 @@ extern "C" {
 
    // Some utility functions
    size_t askme_printf (char **dst, const char *fmt, ...);
-   char **askme_split_response (const char *input);
+   char **askme_split_fields (const char *input, char delim);
 
    // Load and free the questions
    char ***askme_db_load (const char *fname);
    int askme_db_save (const char *qfile);
-   void askme_db_del (char ****questions);
+   void askme_db_del (char ****database);
    int askme_db_add (char ***database, const char *question, const char *answer);
    int askme_db_inc_presentation (char ***database, const char *question);
    int askme_db_inc_correct (char ***database, const char *question);

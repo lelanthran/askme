@@ -79,7 +79,7 @@ static int collect_response (const char *line, void *arg)
    char ***dst = arg;
 
    askme_question_del (*dst);
-   *dst = askme_split_response (line);
+   *dst = askme_split_fields (line, '|');
 
    return *dst ? 1 : 0;
 }
