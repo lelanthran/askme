@@ -11,3 +11,26 @@
 * [/] Tasklist
  1. [ ] Flesh out requirements some more.
 
+* Requirements
+** Local data storage
+Allow users to save questions and answers locally, and those questions are
+displayed to the user at calculated intervals to maximise the memory of
+the answer.
+
+** Target material
+Suitable for any sort of rote memorisation (learning new languages,
+regulations, etc). Unsuitable for anything that requires understanding
+(Calculus, physics, etc).
+
+** Run Locally
+As this is for my private use, I *want* random questions popping up while
+I use my PC. I don't want to start a Q&A session or a test and work
+through it. The interface must be a Window or dialog that pops up, steals
+focus and presents the question, optionally with a hint for the answer.
+
+** Must Allow Easy Addition of New Questions
+Other than allowing a spreadsheet to update the KB, maybe have an extra
+two sets of text entry boxes in the question form that allows the user to
+add a question while they are answering the question.
+
+Dunno how timing will be done in this case.
