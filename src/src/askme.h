@@ -12,12 +12,12 @@
 
 // Data is stored within files in $DATADIR. Each files name is a different topic. Each file is a
 // collection of csv records. Each record has the following fields:
-//    question
-//    answer
-//    creation-timestamp
-//    last-asked-timestamp
-//    presentation-counter
-//    correct-counter
+// 0  question
+// 1  answer
+// 2  creation-timestamp
+// 3  last-asked-timestamp
+// 4  presentation-counter
+// 5  correct-counter
 
 #ifdef __cplusplus
 extern "C" {
