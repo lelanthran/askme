@@ -169,7 +169,6 @@ errorexit:
    return ret;
 }
 
-
 bool askme_db_save (char ***database, const char *qfile)
 {
    if (!database || !qfile)
@@ -224,6 +223,7 @@ static size_t db_nrecs (char ***database)
    return ret;
 }
 
+#if 0
 static size_t rec_nfields (char **rec)
 {
    if (!rec)
@@ -236,6 +236,8 @@ static size_t rec_nfields (char **rec)
 
    return ret;
 }
+
+#endif
 
 #if 1
 void dbdump (const char *label, char ***database)
@@ -258,7 +260,7 @@ bool askme_db_add (char ****database, const char *question, const char *answer)
    char ***tmpdb = NULL;
    size_t nrecords = db_nrecs (*database);
 
-   dbdump ("Before addition", *database);
+   // dbdump ("Before addition", *database);
 
    if (!(tmpdb = realloc (*database, (sizeof *database) * (nrecords + 2))))
       return false;
@@ -282,7 +284,7 @@ bool askme_db_add (char ****database, const char *question, const char *answer)
 
    (*database)[nrecords] = newrec;
 
-   dbdump ("After addition", *database);
+   // dbdump ("After addition", *database);
 
    return true;
 }
@@ -304,7 +306,6 @@ bool db_inc_field (char ***database, const char *question, size_t field)
    while ((index = find_question (database, index, question))!=(size_t)-1) {
       size_t num = 0;
       char sznum[27];
-      size_t nfields = rec_nfields (database[index]);
 
       sscanf (database[index][field], "%zu", &num);
       num++;
@@ -336,12 +337,20 @@ bool askme_db_inc_correct (char ***database, const char *question)
 //////////////////////////////////////////////////////////////////////////////////////
 // Locate a suitable question
 
+static double question_correct_percentage (const char **question)
+{
+   double pcount = 1.0, ccount = 0.0;
+
+   sscanf (question[REC_PCOUNT], "%lf", &pcount);
+   sscanf (question[REC_CCOUNT], "%lf", &ccount);
+   return ccount / pcount;
+}
+
 int record_compare (const void *rec_lhs, const void *rec_rhs)
 {
    const char **record[] = { NULL, NULL };
    size_t pcount[2] = { 1, 1 },
           ccount[2] = { 1, 1 };
-   float fratio[2] = { 0.0, 0.0 };
    size_t ratio[2] = { 0, 0 };
 
    uint64_t last_asked[2] = {0, 0};
@@ -367,32 +376,24 @@ int record_compare (const void *rec_lhs, const void *rec_rhs)
    sscanf (record[1][REC_TIME], "%" PRIu64, &last_asked[1]);
 
    if (pcount[0] == pcount[1] && pcount[0] < 2) {
-      printf ("1. [%s][%s] : %zu/%zu [%i]\n", record[0][0], record[1][0],
-                                      ratio[0], ratio[1], rand_result);
+      // ASKME_LOG ("pcount early return[%s:%s]: %zu\n", record[0][0], record[1][0], pcount[0]);
       return rand_result;
    }
    if (ccount[0] == ccount[1] && ccount[0] < 2) {
-      printf ("2. [%s][%s] : %zu/%zu [%i]\n", record[0][0], record[1][0],
-                                      ratio[0], ratio[1], rand_result);
+      // ASKME_LOG ("ccount early return[%s:%s]: %zu\n", record[0][0], record[1][0], ccount[0]);
       return rand_result;
    }
 
-   fratio[0] = ((float)ccount[0] / pcount[0]);
-   fratio[1] = ((float)ccount[1] / pcount[1]);
+   ratio[0] = round (100.-1 * question_correct_percentage (record[0]));
+   ratio[1] = round (100.0 * question_correct_percentage (record[1]));
 
-   fratio[0] *= 100;
-   fratio[1] *= 100;
-
-   ratio[0] = roundf (fratio[0]);
-   ratio[1] = roundf (fratio[1]);
-
-   printf ("3. [%s][%s] : %zu/%zu\n", record[0][0], record[1][0],
-                                   ratio[0], ratio[1]);
-
-   if (ratio[0] > ratio[1])
-      return 1;
+   // ASKME_LOG ("ratio  return: [%s:%s] [%zu:%zu]\n", record[0][0], record[1][0],
+                                                    // ratio[0], ratio[1]);
 
    if (ratio[0] < ratio[1])
+      return 1;
+
+   if (ratio[0] > ratio[1])
       return -1;
 
    if (last_asked[0] < last_asked[1])
@@ -417,8 +418,25 @@ char **askme_question (char ***database)
    //    last-asked date.
    qsort (database, nrecs, sizeof *database, record_compare);
 
+   size_t first_percentile = nrecs / 10;
+   float percentage = question_correct_percentage ((const char **)database[first_percentile]);
+
+   // 2. If 10% or more of the questions have a correct-ratio of >60%, then choose the
+   //    first question that has a <60% correct-ratio.
+   ASKME_LOG ("Found percentage = %lf in %zu\n", percentage, first_percentile);
+
+   if (percentage > 0.6) {
+      size_t index = first_percentile;
+      while (index < nrecs) {
+         if ((question_correct_percentage ((const char **)database[index])) < 0.6) {
+            return database[index];
+         }
+         index++;
+      }
+   }
+
    // 2. Return the question at the top of the file.
-   return database[0];
+   return database[nrecs-1];
 }
 
 void askme_question_del (char **question)

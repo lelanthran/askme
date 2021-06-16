@@ -1,3 +1,5 @@
-1. Make diaogs wider.
-2. After sorting, if top 10% of the questions are >95% ratio, then choose
-   the first question that is <50% ratio.
+1. Make dialogs wider.
+
+2. Need a better algo for spacing. Maybe store the presentation count, figure
+out from the pcount columns what a good threshold is, and use that? This means
+that the threshold will be recalculated each time the question is selected.
