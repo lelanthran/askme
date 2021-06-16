@@ -167,6 +167,7 @@ int main (void) // for now, no parameters
       if ((strcasecmp (response[0], question[1]))==0) {
          ASKME_LOG ("CORRECT!!! [%s:%s]\n", response[0], question[1]);
          askme_db_inc_correct (database, question[0]);
+         dbdump ("increment ccount\n", database);
       } else {
          ASKME_LOG ("INCORRECT!!! [%s:%s]\n", response[0], question[1]);
          free (correction_command);
@@ -182,6 +183,7 @@ int main (void) // for now, no parameters
       }
 
       // 5. Save the database to file.
+      dbdump ("Saving\n", database);
       if (!(askme_db_save (database, qfile))) {
          ASKME_LOG ("Failed to save [%s]; %m\n", qfile);
          break;

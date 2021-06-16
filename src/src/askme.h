@@ -27,6 +27,7 @@ extern "C" {
    // Some utility functions
    size_t askme_printf (char **dst, const char *fmt, ...);
    char **askme_split_fields (const char *input, char delim);
+   void dbdump (const char *label, char ***database);
 
    // Load and free the questions
    char ***askme_db_load (const char *fname);

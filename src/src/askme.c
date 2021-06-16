@@ -185,9 +185,11 @@ bool askme_db_save (char ***database, const char *qfile)
       const char *delim = "";
       for (size_t j=0; database[i][j]; j++) {
          fprintf (outfile, "%s%s", delim, database[i][j]);
+         printf ("%s%s", delim, database[i][j]);
          delim = "\t";
       }
       fprintf (outfile, "\n");
+      printf ("\n");
    }
 
    fclose (outfile);
@@ -238,8 +240,8 @@ static size_t rec_nfields (char **rec)
    return ret;
 }
 
-#if 0
-static void dbdump (const char *label, char ***database)
+#if 1
+void dbdump (const char *label, char ***database)
 {
    printf ("[%s]\n", label);
    if (!database)
