@@ -103,7 +103,7 @@ void sigh (int n)
 int main (void) // for now, no parameters
 {
    // 1. Set the config values (duration between questions, etc).
-   seconds_t question_interval = 5;
+   seconds_t question_interval = 1;
    const char *datadir = ".";
    const char *topic = "t-one.csv";
    char ***database = NULL;
@@ -151,6 +151,14 @@ int main (void) // for now, no parameters
          break;
       }
 
+      size_t counter = question_interval;
+      if (!response) {
+         while (!g_end && counter--) {
+            sleep (1);
+         }
+         continue;
+      }
+
       //    4.a) Update the database (presentation-counter++)
       askme_db_inc_presentation (database, question[0]);
 
@@ -180,7 +188,6 @@ int main (void) // for now, no parameters
       }
 
       // 6. Sleep for duration.
-      size_t counter = question_interval;
       while (!g_end && counter--) {
          sleep (1);
       }

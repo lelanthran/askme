@@ -7,8 +7,13 @@
 #include <time.h>
 #include <stdint.h>
 #include <inttypes.h>
+#include <math.h>
 
 #include "askme.h"
+
+#define REC_TIME        (3)
+#define REC_PCOUNT      (4)
+#define REC_CCOUNT      (5)
 
 static size_t askme_vprintf (char **dst, const char *fmt, va_list ap)
 {
@@ -104,6 +109,10 @@ bool askme_db_fillrecs (char ***database, size_t nrecs)
             tmprec[j] = strdup ("1");
             tmprec[j+1] = NULL;
          }
+      }
+      if (REC_CCOUNT < nrecs) {
+         free (tmprec[REC_CCOUNT]);
+         tmprec[REC_CCOUNT] = strdup ("0");
       }
       database[i] = tmprec;
    }
@@ -318,12 +327,12 @@ bool db_inc_field (char ***database, const char *question, size_t field)
 
 bool askme_db_inc_presentation (char ***database, const char *question)
 {
-   return db_inc_field (database, question, 4);
+   return db_inc_field (database, question, REC_PCOUNT);
 }
 
 bool askme_db_inc_correct (char ***database, const char *question)
 {
-   return db_inc_field (database, question, 5);
+   return db_inc_field (database, question, REC_CCOUNT);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
@@ -339,6 +348,8 @@ int record_compare (const void *rec_lhs, const void *rec_rhs)
 
    uint64_t last_asked[2] = {0, 0};
 
+   int rand_result = (rand () % 3) - 1;
+
    if (!rec_lhs && rec_rhs)
       return 1;
 
@@ -348,25 +359,42 @@ int record_compare (const void *rec_lhs, const void *rec_rhs)
    record[0] = *(const char ***)rec_lhs;
    record[1] = *(const char ***)rec_rhs;
 
-   sscanf (record[0][5], "%zu", &ccount[0]);
-   sscanf (record[1][5], "%zu", &ccount[1]);
+   sscanf (record[0][REC_CCOUNT], "%zu", &ccount[0]);
+   sscanf (record[1][REC_CCOUNT], "%zu", &ccount[1]);
 
-   sscanf (record[0][4], "%zu", &pcount[0]);
-   sscanf (record[1][4], "%zu", &pcount[1]);
+   sscanf (record[0][REC_PCOUNT], "%zu", &pcount[0]);
+   sscanf (record[1][REC_PCOUNT], "%zu", &pcount[1]);
 
-   sscanf (record[0][3], "%" PRIu64, &last_asked[0]);
-   sscanf (record[1][3], "%" PRIu64, &last_asked[1]);
+   sscanf (record[0][REC_TIME], "%" PRIu64, &last_asked[0]);
+   sscanf (record[1][REC_TIME], "%" PRIu64, &last_asked[1]);
 
-   fratio[0] = (pcount[0] / ccount[0]) * 100.0;
-   fratio[1] = (pcount[1] / ccount[1]) * 100.0;
+   if (pcount[0] == pcount[1] && pcount[0] < 2) {
+      printf ("1. [%s][%s] : %zu/%zu [%i]\n", record[0][0], record[1][0],
+                                      ratio[0], ratio[1], rand_result);
+      return rand_result;
+   }
+   if (ccount[0] == ccount[1] && ccount[0] < 2) {
+      printf ("2. [%s][%s] : %zu/%zu [%i]\n", record[0][0], record[1][0],
+                                      ratio[0], ratio[1], rand_result);
+      return rand_result;
+   }
 
-   ratio[0] = fratio[0];
-   ratio[1] = fratio[1];
+   fratio[0] = ((float)ccount[0] / pcount[0]);
+   fratio[1] = ((float)ccount[1] / pcount[1]);
 
-   if (ratio[0] < ratio[1])
-      return 1;
+   fratio[0] *= 100;
+   fratio[1] *= 100;
+
+   ratio[0] = roundf (fratio[0]);
+   ratio[1] = roundf (fratio[1]);
+
+   printf ("3. [%s][%s] : %zu/%zu\n", record[0][0], record[1][0],
+                                   ratio[0], ratio[1]);
 
    if (ratio[0] > ratio[1])
+      return 1;
+
+   if (ratio[0] < ratio[1])
       return -1;
 
    if (last_asked[0] < last_asked[1])
