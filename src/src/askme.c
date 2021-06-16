@@ -75,6 +75,9 @@ char **askme_split_fields (const char *input, char delim)
       askme_question_del (ret);
       return NULL;
    }
+   char *nl = strchr (copy, '\n');
+   if (nl)
+      *nl = 0;
 
    char delim_list[2] = { delim, 0 };
    char *field = strtok (copy, delim_list);
@@ -106,13 +109,9 @@ bool askme_db_fillrecs (char ***database, size_t nrecs)
 
       for (size_t j=0; j<nrecs; j++) {
          if (!tmprec[j]) {
-            tmprec[j] = strdup ("1");
+            tmprec[j] = j == REC_CCOUNT ? strdup ("0") : strdup ("1");
             tmprec[j+1] = NULL;
          }
-      }
-      if (REC_CCOUNT < nrecs) {
-         free (tmprec[REC_CCOUNT]);
-         tmprec[REC_CCOUNT] = strdup ("0");
       }
       database[i] = tmprec;
    }
@@ -185,11 +184,9 @@ bool askme_db_save (char ***database, const char *qfile)
       const char *delim = "";
       for (size_t j=0; database[i][j]; j++) {
          fprintf (outfile, "%s%s", delim, database[i][j]);
-         printf ("%s%s", delim, database[i][j]);
          delim = "\t";
       }
       fprintf (outfile, "\n");
-      printf ("\n");
    }
 
    fclose (outfile);
@@ -261,7 +258,7 @@ bool askme_db_add (char ****database, const char *question, const char *answer)
    char ***tmpdb = NULL;
    size_t nrecords = db_nrecs (*database);
 
-   // dbdump ("Before addition", *database);
+   dbdump ("Before addition", *database);
 
    if (!(tmpdb = realloc (*database, (sizeof *database) * (nrecords + 2))))
       return false;
@@ -284,9 +281,8 @@ bool askme_db_add (char ****database, const char *question, const char *answer)
    newrec[2] = newrec[3] = newrec[4] = newrec[5] = NULL;
 
    (*database)[nrecords] = newrec;
-   nrecords++;
 
-   // dbdump ("After addition", *database);
+   dbdump ("After addition", *database);
 
    return true;
 }
