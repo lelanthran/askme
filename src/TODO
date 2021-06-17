@@ -3,3 +3,18 @@
 2. Need a better algo for spacing. Maybe store the presentation count, figure
 out from the pcount columns what a good threshold is, and use that? This means
 that the threshold will be recalculated each time the question is selected.
+   1. The more incorrectly a question has been answered, the more likely it is
+      to be displayed next.
+   2. The more frequently a question has been presented, the less likely it is
+      to be displayed next.
+   3. The more recently a question has been presented, the less likely it is
+      to be presented next.
+   4. The records must be stored sorted by presentation time ascending. The
+      ptime of any record is the ptime of the record minus the ptime of the
+      first record.
+
+   // Higher = better chance of being presented.
+   score = ((pcount/ccount) * 0.3)
+         + ((1/pcount) * 0.3)
+         + ((1/questions[0][ptime]) * 0.3);
+
