@@ -113,7 +113,7 @@ bool askme_db_fillrecs (char ***database, size_t nrecs)
       for (size_t j=0; j<nrecs; j++) {
          if (!tmprec[j]) {
             const char *src = "1";
-            if (j == REC_CCOUNT)
+            if (j == REC_CCOUNT || j == REC_PCOUNT)
                src = "0";
             if (j == REC_PTIME)
                src = sznow;
@@ -379,48 +379,48 @@ int record_compare (const void *rec_lhs, const void *rec_rhs)
    sscanf (record[0][REC_PTIME], "%" PRIu64, &last_asked[0]);
    sscanf (record[1][REC_PTIME], "%" PRIu64, &last_asked[1]);
 
-   if (last_asked[0] > last_asked[1])
+   if (last_asked[0] < last_asked[1])
       return 1;
 
-   if (last_asked[0] < last_asked[1])
+   if (last_asked[0] > last_asked[1])
       return -1;
 
    return 0;
 }
 
-double score_question (char **question, double lowest_ptime)
+static double question_score (char **question)
 {
-   //
-   // 1. The more incorrectly a question has been answered, the more likely it is
-   //    to be displayed next.
-   // 2. The more frequently a question has been presented, the less likely it is
-   //    to be displayed next.
-   // 3. The more recently a question has been presented, the less likely it is
-   //    to be presented next.
-   // 4. The records must be stored sorted by presentation time ascending. The
-   //    ptime of any record is the ptime of the record minus the ptime of the
-   //    first record.
-   //
-   // Higher = better chance of being presented.
-   double pcount = 0.0, ccount = 1.0, ptime = 1.0, perc = 0.0;
+   double pcount = 0.0, ccount = 1.0, score = 0.0, guessed = 0.0;
    sscanf (question[REC_PCOUNT], "%lf", &pcount);
    sscanf (question[REC_CCOUNT], "%lf", &ccount);
-   sscanf (question[REC_PTIME],  "%lf", &ptime);
 
-   ptime -= lowest_ptime;
+   // The smaller the pcount, the higher the probability that it was guessed
+   // correctly. TODO: replace magic number with guess_factor.
+   // for pcount = 1 : guess is 0.5
+   //     pcount = 2 : guess is 0.4
+   //     pcount = 3 : guess is 0.3
+   static const double pcguesses[] = {
+      0.1,
+      0.2,
+      0.4,
+      0.75,
+      0.9,
+   };
+   size_t pcidx = pcount + 1;
 
-   perc = pcount/ccount;
-   if (ccount == 0.0 && (rand () % 5))
-      perc = 0.0;
+   guessed = pcidx < sizeof pcguesses / sizeof pcguesses[0] ?
+                  pcguesses[pcidx] : 1.0;
 
-   double score = (perc * 0.75)
-                + ((1/pcount) * 0.2)
-                + (ptime * 0.05);
+   // ASKME_LOG ("%lf, %lf, %lf\n", pcount, ccount, guessed);
 
-   return score;
+   score = ccount / pcount;
+   if (pcount < 1.0)
+      return score != score ? 0.0 : score;
+
+   return score * guessed;
 }
 
-char **askme_question (char ***database)
+char **askme_question (char ***database, uint32_t flags)
 {
    if (!database)
       return NULL;
@@ -429,27 +429,31 @@ char **askme_question (char ***database)
    if (nrecs <= 1)
       return database[0];
 
-   // 1. Sort the database, presentation_time ascending
+   // 1. Sort the database, presentation_time descending (newest first)
    qsort (database, nrecs, sizeof *database, record_compare);
-
-   dbdump ("Sorted", database);
 
    double lowest_time = 0.0;
    sscanf (database[0][REC_PTIME], "%lf", &lowest_time);
 
-   // 2. Update all the scores, keep track of the highest
-   double highest_score = 0.0l;
-   size_t highest_index = 0;
-   for (size_t i=0; database[i]; i++) {
-      double score = score_question (database[i], lowest_time);
-      if (score > highest_score) {
-         highest_score = score;
-         highest_index = i;
+   // 2. For each threshold, find the first question with a score lower
+   // than the threshold. Ask that question or the one immediately after.
+   static const double thresholds[] = {
+      0.5, 0.76, 0.81, 0.85, 0.88, 0.90, 0.91,
+   };
+
+   for (size_t t=0; t < sizeof thresholds / sizeof thresholds[0]; t++) {
+      for (size_t j=0; database[j]; j++) {
+         double score = question_score (database[j]);
+         // ASKME_LOG ("[%s] %lf (%lf)\n", database[j][0], score, thresholds[t]);
+         if (score < thresholds[t]) {
+            return database[j];
+         }
       }
    }
 
-   // Return the question with the highest score.
-   return database[highest_index];
+   // 3. If all the questions are above the highest threshold, return NULL so
+   //    that caller knows the material has been mastered
+   return NULL;
 }
 
 void askme_question_del (char **question)

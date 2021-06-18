@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
+#include <stdint.h>
 
 
 #include <unistd.h>
@@ -56,7 +57,7 @@ static int run_inferior (run_inferior_func_t *callback,
       if (c=='\n' || index>=MAX_LINE_LEN) {
          line[index++] = c;
          line[index] = 0;
-         if (callback (line, argp) < 0)
+         if (callback && callback (line, argp) < 0)
             goto errorexit;
          index = 0;
       } else {
@@ -113,6 +114,8 @@ int main (void) // for now, no parameters
    char **question = NULL;
    char **response = NULL;
 
+   uint32_t flags = 0;
+
    signal (SIGINT, sigh);
 
    if (!(askme_printf (&qfile, "%s/%s", datadir, topic))) {
@@ -130,7 +133,22 @@ int main (void) // for now, no parameters
 
       // 3. Choose a question (TODO: Maybe some parameters for this? Thresholds, etc)
       // askme_question_del (question);
-      question = askme_question (database);
+      question = askme_question (database, flags);
+      if (!question) {
+         if (!(flags & ASKME_FLAG_FORCE)) {
+            run_inferior (NULL, NULL,
+                          "zenity --info --no-wrap --text='"
+                          "Material is mastered. Restart program with --force to ask questions "
+                          "anyway."
+                          "'");
+         } else {
+            run_inferior (NULL, NULL,
+                          "zenity --info --no-wrap --text='"
+                          "Error getting a new question. DB might be corrupt."
+                          "'");
+         }
+         break;
+      }
 
       // 4. Present the question.
       free (question_command);
@@ -152,7 +170,7 @@ int main (void) // for now, no parameters
       }
 
       size_t counter = question_interval;
-      if (!response) {
+      if (!response || !response[0]) {
          while (!g_end && counter--) {
             sleep (1);
          }
@@ -171,7 +189,7 @@ int main (void) // for now, no parameters
          ASKME_LOG ("INCORRECT!!! [%s:%s]\n", response[0], question[1]);
          free (correction_command);
          correction_command = NULL;
-         askme_printf (&correction_command, "zenity --warning --no-wrap "
+         askme_printf (&correction_command, "zenity --width=500px --warning "
                                             "--text='Correct answer: [%s]'", question[1]);
          run_inferior (ignore_response, NULL, correction_command);
       }

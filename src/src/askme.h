@@ -10,6 +10,7 @@
    fprintf (stderr, __VA_ARGS__);\
 } while (0)
 
+#define ASKME_FLAG_FORCE         (1 << 0)
 
 // Data is stored within files in $DATADIR. Each files name is a different topic. Each file is a
 // collection of csv records. Each record has the following fields:
@@ -38,7 +39,7 @@ extern "C" {
    bool askme_db_inc_correct (char ***database, const char *question);
 
    // Locate a suitable question
-   char **askme_question (char ***database);
+   char **askme_question (char ***database, uint32_t flags);
    void askme_question_del (char **question);
 
 #ifdef __cplusplus
