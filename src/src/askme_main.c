@@ -31,6 +31,28 @@
 
 #define MAX_LINE_LEN    ((1024 * 1024) * 10)    // 10MB lines
 
+static char **parse_cline (int argc, char **argv)
+{
+   (void)argc;
+
+   for (size_t i=0; argv[i]; i++) {
+
+      if ((memcmp (argv[i], "--", 2))!=0)
+         continue;
+
+      char *argname = &argv[i][2];
+      char *argvalue = strchr (argname, '=');
+      if (argvalue)
+         *argvalue = 0;
+      else
+         argvalue = " ";
+
+      setenv (argname, &argvalue[1], 1);
+      ASKME_LOG ("Set [%s:%s]\n", argname, &argvalue[1]);
+   }
+   return NULL;
+}
+
 typedef int (run_inferior_func_t) (const char *, void *);
 
 static int run_inferior (run_inferior_func_t *callback,
@@ -101,12 +123,15 @@ void sigh (int n)
       g_end = 1;
 }
 
-int main (void) // for now, no parameters
+int main (int argc, char **argv) // for now, no parameters
 {
+   parse_cline (argc, argv);
+
    // 1. Set the config values (duration between questions, etc).
    seconds_t question_interval = 1;
    const char *datadir = ".";
    const char *topic = "t-one.csv";
+
    char ***database = NULL;
    char *qfile = NULL;
    char *question_command = NULL;
@@ -115,6 +140,18 @@ int main (void) // for now, no parameters
    char **response = NULL;
 
    uint32_t flags = 0;
+
+   if (getenv ("datadir")) {
+      datadir = getenv ("datadir");
+   }
+
+   if (getenv ("topic")) {
+      topic = getenv ("topic");
+   }
+
+   if (getenv ("interval")) {
+      sscanf (getenv ("interval"), "%zu", &question_interval);
+   }
 
    signal (SIGINT, sigh);
 
